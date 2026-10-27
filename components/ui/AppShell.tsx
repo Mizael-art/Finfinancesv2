@@ -14,13 +14,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const bare = pathname?.startsWith("/onboarding") ?? false;
   return (
-    <OnboardingGate>
-      <ThemeApplier />
+    <>
       <Splash />
+      <OnboardingGate>
+      <ThemeApplier />
       {!bare && <Sidebar />}
       {!bare && <RecurrenceRunner />}
       {!bare && <DriveAutoBackup />}
       <div className={bare ? undefined : "lg:pl-64"}>{children}</div>
-    </OnboardingGate>
+      </OnboardingGate>
+    </>
   );
 }
