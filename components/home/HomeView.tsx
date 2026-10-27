@@ -6,7 +6,6 @@ import AccountsSection from "@/components/finance/AccountsSection";
 import AddAccountButton from "@/components/finance/AddAccountButton";
 import FinanceHero from "@/components/finance/FinanceHero";
 import RecentTransactionsSection from "@/components/finance/RecentTransactionsSection";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import Link from "next/link";
@@ -72,7 +71,6 @@ export default function HomeView() {
         </>
       )}
       <RecentTransactionsSection />
-      <BottomNavigation />
     </main>
   );
 }

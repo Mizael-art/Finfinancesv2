@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import AddAccountButton from "@/components/finance/AddAccountButton";
 import BudgetCard from "@/components/finance/BudgetCard";
 import BudgetsSummary from "@/components/finance/BudgetsSummary";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import Toast from "@/components/ui/Toast";
@@ -112,7 +111,6 @@ export default function BudgetsView() {
         </header>
         {body}
       </div>
-      <BottomNavigation />
       {form && data && (form.id ? editing : true) && (
         <BudgetFormSheet key={form.key} budget={editing?.budget} category={editing?.category} available={available} month={shown} onClose={() => setForm(null)} onDone={toast.show} />
       )}

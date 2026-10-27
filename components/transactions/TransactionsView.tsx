@@ -9,7 +9,6 @@ import PeriodSelector from "@/components/finance/PeriodSelector";
 import SearchBar from "@/components/finance/SearchBar";
 import TransactionsList from "@/components/finance/TransactionsList";
 import TransactionsSummary from "@/components/finance/TransactionsSummary";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import { SecondaryButton } from "@/components/ui/FormControls";
@@ -133,7 +132,6 @@ export default function TransactionsView() {
           <NewTransactionFab />
         </div>
       </div>
-      <BottomNavigation />
       {periodOpen && <PeriodSheet value={periodId} onSelect={setPeriodId} onClose={() => setPeriodOpen(false)} />}
       {selected && data && <TransactionDetailSheet key={selected.id} tx={selected} lookups={data} onClose={() => setSelectedId(null)} onDone={toast.show} />}
       <Toast message={toast.message} />

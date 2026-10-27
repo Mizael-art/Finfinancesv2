@@ -68,6 +68,8 @@
   --ok: 21 128 61; --bad: 225 29 72; --bad-soft: 190 18 60; --info: 3 105 161; --warn: 161 98 7;
 }
 
+/* Altura da barra inferior (usada pelas folhas para ficarem acima dela). */
+:root { --nav-h: calc(64px + max(env(safe-area-inset-bottom, 0px), 10px)); }
 html, body { overflow-x: hidden; background: rgb(var(--canvas)); color: rgb(var(--fg)); }
 body { transition: background-color 160ms ease, color 160ms ease; }
 

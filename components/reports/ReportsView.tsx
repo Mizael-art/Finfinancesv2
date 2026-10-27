@@ -8,7 +8,6 @@ import PeriodSelector from "@/components/finance/PeriodSelector";
 import TopExpensesList from "@/components/finance/TopExpensesList";
 import TransactionsSummary from "@/components/finance/TransactionsSummary";
 import PeriodSheet from "@/components/transactions/PeriodSheet";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import { useReportsData } from "@/features/reports/useReportsData";
@@ -99,7 +98,6 @@ export default function ReportsView() {
         </header>
         {body}
       </div>
-      <BottomNavigation />
       {periodOpen && <PeriodSheet value={periodId} onSelect={setPeriodId} onClose={() => setPeriodOpen(false)} />}
     </main>
   );

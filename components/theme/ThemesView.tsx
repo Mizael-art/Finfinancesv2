@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import ErrorState from "@/components/ui/ErrorState";
 import Toast from "@/components/ui/Toast";
 import { useTheme } from "@/features/theme/useTheme";
@@ -81,7 +80,6 @@ export default function ThemesView() {
           </>
         )}
       </div>
-      <BottomNavigation />
       <Toast message={toast.message} />
     </main>
   );

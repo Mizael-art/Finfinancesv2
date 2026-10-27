@@ -4,7 +4,6 @@ import { useState } from "react";
 import AddAccountButton from "@/components/finance/AddAccountButton";
 import GoalCard from "@/components/finance/GoalCard";
 import GoalsSummary from "@/components/finance/GoalsSummary";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import Toast from "@/components/ui/Toast";
@@ -71,7 +70,6 @@ export default function GoalsView() {
         </header>
         {body}
       </div>
-      <BottomNavigation />
       {sheet && data && (sheet.kind === "form" ? (!sheet.id || target) : target) && (
         sheet.kind === "form"
           ? <GoalFormSheet key={sheet.key} goal={target} onClose={() => setSheet(null)} onDone={toast.show} />

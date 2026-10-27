@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import AddAccountButton from "@/components/finance/AddAccountButton";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import { SecondaryButton } from "@/components/ui/FormControls";
@@ -181,7 +180,6 @@ export default function CardsView() {
         </header>
         {body}
       </div>
-      <BottomNavigation />
       {form && data && <CardFormSheet key={form.key} card={form.card} accounts={data.accounts} onClose={() => setForm(null)} onDone={toast.show} />}
       {openView && data && <InvoiceDetailSheet key={openView.invoice.id} view={openView} accounts={data.accounts} defaultAccountId={openCard?.defaultPaymentAccountId} onClose={() => setInvoiceId(null)} onDone={toast.show} />}
       <Toast message={toast.message} />

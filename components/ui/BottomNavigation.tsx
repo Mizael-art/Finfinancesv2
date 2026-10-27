@@ -17,7 +17,7 @@ export default function BottomNavigation() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.07] bg-canvas/90 pb-[max(env(safe-area-inset-bottom,0px),10px)] backdrop-blur-lg"
+      className="fixed inset-x-0 bottom-0 z-[55] border-t border-white/[0.07] bg-canvas/90 pb-[max(env(safe-area-inset-bottom,0px),10px)] backdrop-blur-lg"
     >
       <div className="mx-auto flex max-w-[460px] items-stretch justify-between px-2">
         {items.map((it) => {

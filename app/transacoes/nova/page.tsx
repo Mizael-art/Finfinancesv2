@@ -4,7 +4,7 @@ import NewTransactionForm from "@/components/finance/NewTransactionForm";
 
 export default function NovaTransacaoPage() {
   return (
-    <main className="min-h-dvh pb-10">
+    <main className="min-h-dvh pb-28">
       <div className="mx-auto w-full max-w-[460px] px-4 pt-6">
         <header className="mb-5 flex items-center gap-3">
           <Link

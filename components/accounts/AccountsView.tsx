@@ -4,7 +4,6 @@ import { useState } from "react";
 import AccountRow from "@/components/finance/AccountRow";
 import AddAccountButton from "@/components/finance/AddAccountButton";
 import TotalAccountsCard from "@/components/finance/TotalAccountsCard";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import Toast from "@/components/ui/Toast";
@@ -90,7 +89,6 @@ export default function AccountsView() {
         </header>
         {body}
       </div>
-      <BottomNavigation />
       {form && <AccountFormSheet key={form.key} account={form.account} onClose={() => setForm(null)} onDone={toast.show} />}
       <Toast message={toast.message} />
     </main>

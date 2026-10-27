@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import AddAccountButton from "@/components/finance/AddAccountButton";
 import PeriodSelector from "@/components/finance/PeriodSelector";
 import PeriodSheet from "@/components/transactions/PeriodSheet";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import { PrimaryButton, Segmented } from "@/components/ui/FormControls";
@@ -132,7 +131,6 @@ export default function CategoriesView() {
           <div className="mt-5 flex justify-center"><AddAccountButton label="Nova categoria" onClick={() => setForm({ key: Date.now() })} /></div>
         )}
       </div>
-      <BottomNavigation />
       {periodOpen && <PeriodSheet value={periodId} onSelect={setPeriodId} onClose={() => setPeriodOpen(false)} />}
       {form && data && (form.id ? editing : true) && (
         <CategoryFormSheet key={form.key} item={editing} kind={editing?.category.kind ?? kind} all={data.map((i) => i.category)} onClose={() => setForm(null)} onDone={toast.show} />

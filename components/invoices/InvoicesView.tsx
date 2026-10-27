@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import Toast from "@/components/ui/Toast";
@@ -136,7 +135,6 @@ export default function InvoicesView() {
         </header>
         {body}
       </div>
-      <BottomNavigation />
       {selected && data && (
         <InvoiceDetailSheet key={selected.invoice.id} view={selected} accounts={data.accounts} defaultAccountId={cardOfSelected?.defaultPaymentAccountId} onClose={() => setSelectedId(null)} onDone={toast.show} />
       )}

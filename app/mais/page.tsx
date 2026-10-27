@@ -1,5 +1,4 @@
 import Link from "next/link";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import { MORE_LINKS } from "@/features/more/links";
 
 export const metadata = { title: "Mais · FinFinance" };
@@ -32,7 +31,6 @@ export default function MaisPage() {
           ))}
         </nav>
       </div>
-      <BottomNavigation />
     </main>
   );
 }

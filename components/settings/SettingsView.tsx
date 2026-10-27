@@ -3,7 +3,6 @@
 import { normalizeTheme, themeById } from "@/features/theme/themes";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import BottomNavigation from "@/components/ui/BottomNavigation";
 import ErrorState from "@/components/ui/ErrorState";
 import { Field, PrimaryButton, Select, inputClass } from "@/components/ui/FormControls";
 import Toast from "@/components/ui/Toast";
@@ -133,7 +132,6 @@ export default function SettingsView() {
         <header className="mb-5"><h1 className="text-[26px] font-semibold tracking-tight text-white">Configurações</h1></header>
         {body}
       </div>
-      <BottomNavigation />
       <Toast message={toast.message} />
     </main>
   );
