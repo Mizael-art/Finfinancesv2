@@ -1,0 +1,980 @@
+AGORA VAMOS DEFINIR A ESTRUTURA COMPLETA DO FINFINANCE.
+
+IMPORTANTE:
+A primeira interface que você acabou de criar será a REFERÊNCIA OFICIAL DE DESIGN do aplicativo.
+
+NÃO quero que você crie um novo design para as próximas páginas.
+
+Todas as próximas telas precisam parecer que fazem parte EXATAMENTE DO MESMO APLICATIVO.
+
+==================================================
+REGRA PRINCIPAL — DESIGN SYSTEM
+==================================================
+
+A interface atual do Dashboard/Home deve ser considerada o Design System inicial do FinFinance.
+
+Mantenha:
+
+- mesma paleta de cores;
+- mesmo fundo;
+- mesma tipografia;
+- mesmos tamanhos e pesos de texto;
+- mesmo estilo de cards;
+- mesmo border-radius;
+- mesmas bordas;
+- mesmas sombras;
+- mesmos gradientes;
+- mesma linguagem visual;
+- mesmos espaçamentos;
+- mesmas animações;
+- mesmos ícones;
+- mesma sensação de profundidade;
+- mesma aparência premium.
+
+NÃO quero que cada página tenha uma aparência diferente.
+
+O usuário deve navegar entre as páginas e sentir que continua dentro do mesmo aplicativo.
+
+Se algum novo componente for necessário, ele deve seguir os componentes existentes.
+
+Crie componentes reutilizáveis sempre que possível.
+
+==================================================
+IDENTIDADE DO FINFINANCE
+==================================================
+
+O FinFinance é um aplicativo completo de gerenciamento financeiro pessoal.
+
+A proposta é permitir que o usuário tenha controle de toda a sua vida financeira em um único lugar.
+
+O usuário deve conseguir:
+
+- saber quanto dinheiro possui;
+- saber onde o dinheiro está;
+- registrar receitas;
+- registrar despesas;
+- controlar contas bancárias;
+- controlar cartões;
+- acompanhar faturas;
+- controlar limites;
+- criar orçamentos;
+- criar metas;
+- acompanhar investimentos futuramente;
+- visualizar relatórios;
+- analisar seus hábitos financeiros.
+
+O aplicativo deve transmitir:
+
+CONTROLE
+CLAREZA
+SEGURANÇA
+TECNOLOGIA
+SOFISTICAÇÃO
+SIMPLICIDADE
+
+==================================================
+ESTRUTURA PRINCIPAL DO APP
+==================================================
+
+O FinFinance terá as seguintes áreas:
+
+1. INÍCIO
+2. TRANSAÇÕES
+3. CONTAS
+4. CARTÕES
+5. ORÇAMENTOS
+6. METAS
+7. RELATÓRIOS
+8. INVESTIMENTOS
+9. CATEGORIAS
+10. CONFIGURAÇÕES
+
+Essas páginas devem compartilhar o mesmo Design System.
+
+==================================================
+1. INÍCIO / DASHBOARD
+==================================================
+
+Esta é a página que já começamos.
+
+Ela será o centro de controle financeiro.
+
+Deve mostrar:
+
+- saldo total;
+- saldo disponível;
+- receitas do período;
+- despesas do período;
+- contas bancárias;
+- cartões;
+- transações recentes;
+- resumo dos gastos;
+- evolução financeira;
+- atalhos para ações importantes.
+
+Principais ações:
+
++ Nova transação
+
+O usuário poderá escolher:
+
+- Receita
+- Despesa
+- Transferência
+
+Também haverá acesso rápido para:
+
+- adicionar conta;
+- adicionar cartão;
+- visualizar transações;
+- visualizar relatório.
+
+A Home deve continuar sendo a página mais visual e premium do aplicativo.
+
+==================================================
+2. TRANSAÇÕES
+==================================================
+
+A página Transações será responsável por TODA a movimentação financeira.
+
+Deve existir uma lista de transações.
+
+Cada transação terá:
+
+- descrição;
+- valor;
+- tipo;
+- categoria;
+- conta;
+- cartão, quando aplicável;
+- data;
+- horário;
+- observação;
+- status;
+- recorrência.
+
+Tipos:
+
+RECEITA
+DESPESA
+TRANSFERÊNCIA
+
+Exemplos:
+
+Salário
++ R$ 2.500,00
+
+Mercado
+- R$ 182,40
+
+Netflix
+- R$ 39,90
+
+Transferência para Nubank
+R$ 500,00
+
+FUNCIONALIDADES:
+
+- adicionar transação;
+- editar transação;
+- excluir transação;
+- visualizar detalhes;
+- pesquisar;
+- filtrar;
+- ordenar;
+- selecionar período;
+- filtrar por categoria;
+- filtrar por conta;
+- filtrar por cartão;
+- filtrar por tipo;
+- filtrar por valor.
+
+Também deve existir resumo:
+
+Receitas
+Despesas
+Saldo do período
+
+A pesquisa deve ser rápida e intuitiva.
+
+==================================================
+3. CONTAS
+==================================================
+
+A página Contas mostrará onde o dinheiro do usuário está.
+
+Exemplos:
+
+Nubank
+Inter
+C6 Bank
+Itaú
+Carteira
+Dinheiro em espécie
+
+Cada conta terá:
+
+- nome;
+- instituição;
+- tipo;
+- saldo;
+- saldo inicial;
+- cor/ícone;
+- número parcial, se aplicável;
+- data de criação.
+
+TIPOS DE CONTA:
+
+- conta corrente;
+- conta poupança;
+- carteira;
+- dinheiro;
+- conta digital;
+- investimento.
+
+FUNCIONALIDADES:
+
++ Adicionar conta
+
+Editar conta
+
+Excluir conta
+
+Visualizar conta
+
+Ao abrir uma conta, mostrar:
+
+- saldo atual;
+- entradas;
+- saídas;
+- transações daquela conta;
+- evolução do saldo;
+- período;
+- maiores gastos;
+- transferências.
+
+Também deve existir:
+
+"Transferir dinheiro"
+
+para movimentar dinheiro entre contas.
+
+==================================================
+4. CARTÕES
+==================================================
+
+A página Cartões será responsável pelos cartões de crédito.
+
+Cada cartão deve possuir uma representação visual premium seguindo o mesmo estilo do Dashboard.
+
+Informações:
+
+- nome do cartão;
+- banco;
+- últimos 4 dígitos;
+- limite total;
+- limite disponível;
+- limite utilizado;
+- fechamento da fatura;
+- vencimento;
+- bandeira.
+
+Exemplo:
+
+Cartão Nubank
+
+Limite
+R$ 5.000,00
+
+Disponível
+R$ 3.240,00
+
+Utilizado
+R$ 1.760,00
+
+FUNCIONALIDADES:
+
++ Adicionar cartão
+
+Editar cartão
+
+Excluir cartão
+
+Visualizar cartão
+
+Abrir fatura
+
+Visualizar compras
+
+Ver limite
+
+Ver limite disponível
+
+Ver fechamento
+
+Ver vencimento
+
+==================================================
+5. FATURAS
+==================================================
+
+As faturas fazem parte do sistema de cartões.
+
+Cada cartão terá suas faturas.
+
+A página da fatura deve mostrar:
+
+- valor total;
+- valor pago;
+- valor restante;
+- vencimento;
+- fechamento;
+- compras;
+- parcelas.
+
+Status:
+
+ABERTA
+FECHADA
+PAGA
+ATRASADA
+
+FUNCIONALIDADES:
+
+- visualizar fatura;
+- pagar fatura;
+- registrar pagamento;
+- visualizar compras;
+- visualizar parcelas;
+- filtrar compras;
+- cancelar/estornar compra quando permitido.
+
+O pagamento da fatura deve refletir corretamente no saldo da conta utilizada.
+
+==================================================
+6. ORÇAMENTOS
+==================================================
+
+A página Orçamentos será responsável pelo controle de gastos.
+
+O usuário poderá definir quanto pretende gastar em determinada categoria.
+
+Exemplo:
+
+Alimentação
+Limite: R$ 800
+
+Transporte
+Limite: R$ 400
+
+Lazer
+Limite: R$ 300
+
+O sistema mostrará:
+
+Gasto atual
+Limite
+Disponível
+Percentual utilizado
+
+Exemplo:
+
+Alimentação
+
+R$ 620 / R$ 800
+
+77,5%
+
+Criar alertas visuais quando:
+
+- estiver próximo do limite;
+- atingir o limite;
+- ultrapassar o limite.
+
+FUNCIONALIDADES:
+
++ Criar orçamento
+
+Editar orçamento
+
+Excluir orçamento
+
+Escolher categoria
+
+Definir limite
+
+Definir período
+
+Visualizar progresso
+
+==================================================
+7. METAS
+==================================================
+
+A página Metas permitirá criar objetivos financeiros.
+
+Exemplos:
+
+Comprar uma moto
+Viagem
+Reserva de emergência
+Computador
+Casa
+Intercâmbio
+
+Cada meta terá:
+
+- nome;
+- valor objetivo;
+- valor atual;
+- percentual;
+- prazo;
+- descrição;
+- imagem/ícone opcional.
+
+Exemplo:
+
+Reserva de emergência
+
+R$ 3.500 / R$ 10.000
+
+35%
+
+FUNCIONALIDADES:
+
++ Criar meta
+
+Adicionar dinheiro
+
+Retirar dinheiro
+
+Editar meta
+
+Excluir meta
+
+Definir prazo
+
+Visualizar progresso
+
+O usuário deve conseguir acompanhar visualmente a evolução.
+
+==================================================
+8. RELATÓRIOS
+==================================================
+
+A página Relatórios será uma área mais analítica.
+
+Ela deve permitir entender para onde o dinheiro está indo.
+
+Mostrar:
+
+- receitas;
+- despesas;
+- saldo;
+- evolução patrimonial;
+- gastos por categoria;
+- gastos por conta;
+- gastos por cartão;
+- comparação entre meses;
+- maiores despesas;
+- maiores categorias;
+- evolução das receitas.
+
+Filtros:
+
+- hoje;
+- semana;
+- mês;
+- ano;
+- período personalizado.
+
+Exemplos de visualização:
+
+Gastos por categoria
+
+Alimentação
+32%
+
+Transporte
+21%
+
+Moradia
+18%
+
+Lazer
+12%
+
+Outros
+17%
+
+Também quero comparação:
+
+Agosto
+R$ 2.400 gastos
+
+Setembro
+R$ 2.100 gastos
+
+Economia:
+R$ 300
+
+Os gráficos devem seguir exatamente o Design System atual.
+
+==================================================
+9. INVESTIMENTOS
+==================================================
+
+A página Investimentos será preparada para acompanhar patrimônio investido.
+
+Categorias futuras:
+
+- renda fixa;
+- ações;
+- fundos;
+- FIIs;
+- criptomoedas;
+- ETFs;
+- outros.
+
+Cada investimento poderá ter:
+
+- nome;
+- tipo;
+- instituição;
+- valor investido;
+- valor atual;
+- rentabilidade;
+- quantidade;
+- preço médio;
+- data.
+
+Mostrar:
+
+Patrimônio investido
+
+Rentabilidade
+
+Lucro/prejuízo
+
+Distribuição da carteira
+
+IMPORTANTE:
+
+Nesta primeira fase NÃO precisamos implementar integração automática com corretoras.
+
+A estrutura deve apenas estar preparada.
+
+==================================================
+10. CATEGORIAS
+==================================================
+
+A página Categorias permitirá organizar as transações.
+
+Categorias padrão:
+
+Alimentação
+Transporte
+Moradia
+Lazer
+Saúde
+Educação
+Assinaturas
+Compras
+Salário
+Investimentos
+Outros
+
+O usuário poderá:
+
+- criar categoria;
+- editar;
+- excluir;
+- escolher ícone;
+- escolher cor;
+- definir tipo;
+- visualizar gastos daquela categoria.
+
+Também existirão subcategorias futuramente.
+
+==================================================
+11. CONFIGURAÇÕES
+==================================================
+
+A página Configurações será responsável pelas preferências do aplicativo.
+
+Seções:
+
+PERFIL
+
+- nome;
+- email;
+- foto;
+- informações pessoais.
+
+APARÊNCIA
+
+- tema;
+- aparência;
+- preferências visuais.
+
+FINANCEIRO
+
+- moeda;
+- primeiro dia do mês;
+- configurações de orçamento;
+- preferências de notificações.
+
+SEGURANÇA
+
+- senha;
+- biometria;
+- autenticação;
+- sessões.
+
+NOTIFICAÇÕES
+
+- gastos;
+- vencimentos;
+- orçamento;
+- metas;
+- faturas.
+
+DADOS
+
+- exportar dados;
+- importar dados;
+- backup.
+
+CONTA
+
+- sair;
+- excluir conta.
+
+==================================================
+12. NAVEGAÇÃO
+==================================================
+
+IMPORTANTE:
+
+Não coloque todas as 10 páginas diretamente na barra inferior do celular.
+
+No MOBILE quero uma navegação limpa.
+
+Sugestão:
+
+Início
+Transações
+Contas
+Cartões
+Mais
+
+Ao tocar em "Mais", abrir um menu elegante contendo:
+
+Orçamentos
+Metas
+Relatórios
+Investimentos
+Categorias
+Configurações
+
+No DESKTOP pode existir uma sidebar lateral.
+
+Exemplo:
+
+FINFINANCE
+
+⌂ Início
+↔ Transações
+🏦 Contas
+💳 Cartões
+🎯 Orçamentos
+🏆 Metas
+📊 Relatórios
+📈 Investimentos
+🏷 Categorias
+
+────────────
+
+⚙ Configurações
+
+A sidebar deve usar o mesmo estilo visual do Dashboard.
+
+==================================================
+13. NOVA TRANSAÇÃO
+==================================================
+
+Essa será uma das funcionalidades mais importantes do aplicativo.
+
+O usuário deve conseguir abrir "Nova transação" de qualquer lugar relevante.
+
+Ao abrir:
+
+Nova transação
+
+[ Receita ] [ Despesa ] [ Transferência ]
+
+Depois:
+
+Valor
+R$ 0,00
+
+Descrição
+
+Categoria
+
+Conta
+
+Data
+
+Observação
+
+Recorrência
+
+Salvar
+
+Para cartão:
+
+Cartão
+Fatura
+Parcelamento
+
+Se for parcelada:
+
+1x
+2x
+3x
+6x
+12x
+
+O sistema deverá futuramente gerar corretamente as parcelas.
+
+==================================================
+14. BUSCA GLOBAL
+==================================================
+
+Futuramente quero uma busca global.
+
+O usuário poderá pesquisar:
+
+- transações;
+- contas;
+- cartões;
+- categorias;
+- metas.
+
+Exemplo:
+
+Pesquisar:
+"Netflix"
+
+Resultado:
+
+Netflix
+Assinaturas
+-R$ 39,90
+Nubank
+15/09/2026
+
+==================================================
+15. NOTIFICAÇÕES
+==================================================
+
+O aplicativo futuramente poderá avisar:
+
+- fatura próxima do vencimento;
+- orçamento quase atingido;
+- orçamento ultrapassado;
+- meta próxima;
+- transação recorrente;
+- entrada de salário;
+- conta vencendo.
+
+As notificações também devem seguir o mesmo Design System.
+
+==================================================
+16. DESIGN SYSTEM GLOBAL
+==================================================
+
+A partir de agora, o design que você criou na primeira Home será a BASE VISUAL OFICIAL.
+
+Não crie uma nova identidade para cada página.
+
+Crie componentes reutilizáveis para:
+
+- Button
+- Card
+- Input
+- Select
+- Modal
+- Sheet
+- Badge
+- Avatar
+- Tabs
+- Navigation
+- Sidebar
+- BottomNavigation
+- TransactionItem
+- AccountCard
+- CreditCard
+- EmptyState
+- LoadingState
+- ErrorState
+
+Sempre que uma nova página precisar de um desses elementos, reutilize o componente existente.
+
+==================================================
+17. EXPERIÊNCIA MOBILE
+==================================================
+
+O FinFinance deve ser pensado primeiro para celular.
+
+Prioridade:
+
+1. iPhone
+2. Android
+3. Tablet
+4. Desktop
+
+No mobile:
+
+- navegação inferior;
+- cards adaptáveis;
+- botões grandes o suficiente para toque;
+- formulários fáceis de usar;
+- ações rápidas;
+- gestos quando fizer sentido;
+- sem overflow horizontal.
+
+==================================================
+18. EXPERIÊNCIA DESKTOP
+==================================================
+
+No desktop:
+
+- sidebar;
+- conteúdo central;
+- melhor aproveitamento de espaço;
+- cards organizados;
+- tabelas quando fizer sentido;
+- gráficos maiores.
+
+Mas NÃO transforme o FinFinance em um sistema empresarial cheio de tabelas.
+
+Continua sendo um aplicativo financeiro pessoal moderno.
+
+==================================================
+19. ARQUITETURA
+==================================================
+
+Mantenha a arquitetura preparada para crescer.
+
+Não quero uma aplicação onde toda a lógica esteja dentro das páginas.
+
+Separar:
+
+components
+features
+hooks
+lib
+types
+data
+services
+
+Quando começarmos o backend:
+
+services/
+    accounts
+    transactions
+    cards
+    budgets
+    goals
+    reports
+
+A estrutura exata pode ser definida conforme o projeto evoluir.
+
+==================================================
+20. BACKEND FUTURO
+==================================================
+
+O projeto futuramente utilizará:
+
+Supabase
+PostgreSQL
+Authentication
+
+Mas NÃO implemente isso agora, a menos que eu peça.
+
+A interface deve ser construída de maneira que futuramente seja fácil trocar:
+
+MOCK DATA
+
+por
+
+SUPABASE
+
+sem precisar reconstruir toda a interface.
+
+==================================================
+21. REGRA MAIS IMPORTANTE
+==================================================
+
+NÃO implemente todas essas páginas agora.
+
+Este prompt serve para você ENTENDER A VISÃO COMPLETA DO FINFINANCE.
+
+Quero que você tenha consciência de como o aplicativo inteiro será estruturado para não criar componentes ou decisões de design que entrem em conflito com as próximas funcionalidades.
+
+Porém, vamos desenvolver uma página por vez.
+
+A primeira Home que você criou continua sendo a referência.
+
+NÃO altere o design atual sem eu pedir.
+
+Quando eu pedir uma nova página, você deverá:
+
+1. reutilizar o Design System;
+2. reutilizar componentes;
+3. manter a identidade visual;
+4. manter a experiência mobile;
+5. manter a experiência desktop;
+6. garantir que a nova página se encaixe perfeitamente no restante do aplicativo.
+
+==================================================
+VISÃO FINAL
+==================================================
+
+O FinFinance deverá parecer um produto financeiro completo e profissional.
+
+O usuário entra e vê:
+
+INÍCIO
+↓
+Seu dinheiro
+↓
+Suas contas
+↓
+Suas transações
+↓
+Seus cartões
+↓
+Seus orçamentos
+↓
+Suas metas
+↓
+Seus relatórios
+↓
+Seus investimentos
+↓
+Suas configurações
+
+Tudo precisa parecer parte do MESMO produto.
+
+Não quero 10 páginas bonitas individualmente.
+
+Quero UM aplicativo bonito e consistente.
+
+Por enquanto, apenas registre essa arquitetura e mantenha a Home atual intacta.
+
+NÃO comece a implementar todas essas páginas automaticamente.
+
+Espere minha próxima instrução para desenvolver a próxima parte.

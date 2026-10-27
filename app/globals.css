@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Temas: TODAS as cores da interface vêm destas variáveis (RGB sem vírgulas, para aceitar opacidade). =====
+   --fg: cor do texto/bordas (branco nos escuros, quase preto nos claros) — as classes text-white/bg-white/border-white seguem ela.
+   --accent-*: cor de destaque. --ok/--bad/--warn: receita, despesa e alerta (NÃO mudam de significado entre temas). */
+:root[data-theme="padrao"] {
+  color-scheme: dark;
+  --canvas: 10 10 21; --panel: 18 18 31; --fg: 255 255 255;
+  --accent-200: 221 214 254; --accent-300: 196 181 253; --accent-400: 167 139 250; --accent-500: 139 92 246; --accent-600: 124 58 237;
+  --ok: 34 224 112; --bad: 240 57 107; --bad-soft: 255 122 156; --info: 42 169 240; --warn: 232 199 90;
+}
+/* Preto e branco: padrão do app (identidade da logo). O :root sem atributo também usa estes valores. */
+:root, :root[data-theme="preto"] {
+  color-scheme: dark;
+  --canvas: 0 0 0; --panel: 12 12 12; --fg: 255 255 255;
+  --accent-200: 250 250 250; --accent-300: 229 229 229; --accent-400: 212 212 212; --accent-500: 245 245 245; --accent-600: 212 212 212;
+  --ok: 34 224 112; --bad: 240 57 107; --bad-soft: 255 122 156; --info: 42 169 240; --warn: 232 199 90;
+}
+:root[data-theme="azul"] {
+  color-scheme: dark;
+  --canvas: 6 12 26; --panel: 11 20 38; --fg: 255 255 255;
+  --accent-200: 191 219 254; --accent-300: 147 197 253; --accent-400: 96 165 250; --accent-500: 37 99 235; --accent-600: 29 78 216;
+  --ok: 34 224 112; --bad: 240 57 107; --bad-soft: 255 122 156; --info: 42 169 240; --warn: 232 199 90;
+}
+/* Verde-escuro (cor da primeira versão da logo). */
+:root[data-theme="verde"] {
+  color-scheme: dark;
+  --canvas: 3 18 12; --panel: 9 30 21; --fg: 255 255 255;
+  --accent-200: 167 243 208; --accent-300: 110 231 183; --accent-400: 52 211 153; --accent-500: 5 150 105; --accent-600: 4 120 87;
+  --ok: 34 224 112; --bad: 240 57 107; --bad-soft: 255 122 156; --info: 42 169 240; --warn: 232 199 90;
+}
+:root[data-theme="vermelho"] {
+  color-scheme: dark;
+  --canvas: 20 7 9; --panel: 32 12 15; --fg: 255 255 255;
+  --accent-200: 254 202 202; --accent-300: 252 165 165; --accent-400: 248 113 113; --accent-500: 220 38 38; --accent-600: 185 28 28;
+  --ok: 34 224 112; --bad: 240 57 107; --bad-soft: 255 122 156; --info: 42 169 240; --warn: 232 199 90;
+}
+:root[data-theme="padrao-claro"] {
+  color-scheme: light;
+  --canvas: 247 247 251; --panel: 255 255 255; --fg: 15 15 25;
+  --accent-200: 91 33 182; --accent-300: 109 40 217; --accent-400: 139 92 246; --accent-500: 124 58 237; --accent-600: 109 40 217;
+  --ok: 21 128 61; --bad: 225 29 72; --bad-soft: 190 18 60; --info: 3 105 161; --warn: 161 98 7;
+}
+:root[data-theme="preto-claro"] {
+  color-scheme: light;
+  --canvas: 250 250 250; --panel: 255 255 255; --fg: 10 10 10;
+  --accent-200: 23 23 23; --accent-300: 38 38 38; --accent-400: 82 82 82; --accent-500: 38 38 38; --accent-600: 23 23 23;
+  --ok: 21 128 61; --bad: 225 29 72; --bad-soft: 190 18 60; --info: 3 105 161; --warn: 161 98 7;
+}
+:root[data-theme="azul-claro"] {
+  color-scheme: light;
+  --canvas: 245 249 255; --panel: 255 255 255; --fg: 11 20 38;
+  --accent-200: 30 58 138; --accent-300: 29 78 216; --accent-400: 59 130 246; --accent-500: 37 99 235; --accent-600: 29 78 216;
+  --ok: 21 128 61; --bad: 225 29 72; --bad-soft: 190 18 60; --info: 3 105 161; --warn: 161 98 7;
+}
+:root[data-theme="verde-claro"] {
+  color-scheme: light;
+  --canvas: 244 251 246; --panel: 255 255 255; --fg: 10 28 19;
+  --accent-200: 6 78 59; --accent-300: 4 120 87; --accent-400: 16 185 129; --accent-500: 5 150 105; --accent-600: 4 120 87;
+  --ok: 21 128 61; --bad: 225 29 72; --bad-soft: 190 18 60; --info: 3 105 161; --warn: 161 98 7;
+}
+:root[data-theme="vermelho-claro"] {
+  color-scheme: light;
+  --canvas: 255 246 246; --panel: 255 255 255; --fg: 32 12 15;
+  --accent-200: 127 29 29; --accent-300: 185 28 28; --accent-400: 239 68 68; --accent-500: 220 38 38; --accent-600: 185 28 28;
+  --ok: 21 128 61; --bad: 225 29 72; --bad-soft: 190 18 60; --info: 3 105 161; --warn: 161 98 7;
+}
+
+html, body { overflow-x: hidden; background: rgb(var(--canvas)); color: rgb(var(--fg)); }
+body { transition: background-color 160ms ease, color 160ms ease; }
+
+
+/* Temas claros: texto secundário mais firme (45% de opacidade fica fraco sobre branco). */
+:root[data-theme$="-claro"] :is(.text-white\/25, .text-white\/30, .text-white\/35, .text-white\/40, .text-white\/45, .text-white\/50, .text-white\/55) { color: rgb(var(--fg) / 0.64); }
+:root[data-theme$="-claro"] :is(.text-white\/60, .text-white\/70) { color: rgb(var(--fg) / 0.74); }
+
+/* Superfícies coloridas (botão de destaque, ícones com degradê, cartões bancários, carteira):
+   o texto sobre elas é sempre branco, em qualquer tema. */
+.bg-violet-500, .bg-violet-600, .keep-light, [style*="linear-gradient"], [style*="--keep-light"] { --fg: 255 255 255; }
+
+/* Preto e branco escuro: botão de destaque é branco, então o texto sobre ele é preto. */
+:root:not([data-theme]) .bg-violet-500, :root:not([data-theme]) .bg-violet-600,
+:root[data-theme="preto"] .bg-violet-500, :root[data-theme="preto"] .bg-violet-600 { --fg: 0 0 0; }
+
+/* Logo escura-sobre-clara: nos temas claros ela é invertida (fica preta). */
+:root[data-theme$="-claro"] .ff-logo-img { filter: invert(1); }
+
+/* Lista aberta dos <select>: fundo sólido do tema (sem isso o navegador desenha branco sobre branco). */
+select { background-color: rgb(var(--panel)); color: rgb(var(--fg)); }
+select option, select optgroup { background-color: rgb(var(--panel)); color: rgb(var(--fg)); }
+
+.account-card {
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 220ms;
+  animation: card-in 650ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  cursor: pointer;
+}
+.account-card:hover,
+.account-card:active { transform: translateY(-1.2cqw); filter: brightness(1.08); }
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(14cqw); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-card { animation: none; transition: none; }
+  body { transition: none; }
+}
+
+/* ===== Entrada do app: logo preto e branco, barras subindo, nome e saída suave. Só transform e opacity (leve para a GPU). =====
+   O script do <head> liga com data-splash="long" (1ª abertura da sessão) ou "short" (já visitou antes). */
+.ff-splash { display: none; pointer-events: none; }
+html[data-splash] .ff-splash {
+  display: flex; position: fixed; inset: 0; z-index: 100; align-items: center; justify-content: center;
+  background: radial-gradient(120% 90% at 50% 42%, #161616 0%, #070707 55%, #000 100%);
+}
+.ff-stage { display: flex; flex-direction: column; align-items: center; gap: clamp(14px, 3.4vh, 26px); transform: translateY(-2vh); }
+.ff-mark { position: relative; width: min(42vw, 176px); aspect-ratio: 368 / 424; }
+.ff-mark img, .ff-sheen { position: absolute; inset: 0; width: 100%; height: 100%; user-select: none; }
+.ff-word { width: min(62vw, 260px); height: auto; }
+.ff-glow { position: absolute; width: min(110vw, 520px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05) 55%, transparent 72%); }
+.ff-sheen {
+  -webkit-mask-image: url(/brand/mark.webp); mask-image: url(/brand/mark.webp); -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.55) 50%, transparent 62%) 160% 0 / 260% 100% no-repeat;
+}
+.ff-bar { transform-origin: var(--ox) 97.2%; }
+
+@keyframes ff-body-in { from { opacity: 0; transform: translateY(22px) scale(0.88); } to { opacity: 1; transform: none; } }
+@keyframes ff-bar-up { from { opacity: 0; transform: scaleY(0); } 55% { opacity: 1; } to { opacity: 1; transform: scaleY(1); } }
+@keyframes ff-glow-in { 0% { opacity: 0; transform: scale(0.55); } 55% { opacity: 1; } 100% { opacity: 0.65; transform: scale(1.08); } }
+@keyframes ff-sheen-run { from { background-position: 160% 0; } to { background-position: -60% 0; } }
+@keyframes ff-word-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes ff-splash-out { to { opacity: 0; visibility: hidden; } }
+@keyframes ff-stage-out { to { transform: translateY(-2vh) scale(1.06); } }
+@keyframes ff-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Primeira abertura: ~1,4 s (entrada 0–1,05 s, saída 1,1–1,4 s). */
+html[data-splash="long"] .ff-splash { animation: ff-splash-out 300ms ease-in 1100ms forwards; }
+html[data-splash="long"] .ff-stage { animation: ff-stage-out 300ms ease-in 1100ms forwards; }
+html[data-splash="long"] .ff-glow { animation: ff-glow-in 1000ms cubic-bezier(0.2, 0.7, 0.2, 1) 0ms both; }
+html[data-splash="long"] .ff-body { animation: ff-body-in 620ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both; }
+html[data-splash="long"] .ff-bar { animation: ff-bar-up 560ms cubic-bezier(0.34, 1.35, 0.64, 1) calc(360ms + var(--i) * 95ms) both; }
+html[data-splash="long"] .ff-sheen { animation: ff-sheen-run 520ms cubic-bezier(0.4, 0, 0.2, 1) 780ms both; }
+html[data-splash="long"] .ff-word { animation: ff-word-in 520ms cubic-bezier(0.16, 1, 0.3, 1) 560ms both; }
+
+/* Aberturas seguintes: só um aparecer rápido (~0,4 s). */
+html[data-splash="short"] .ff-splash { animation: ff-splash-out 180ms ease-in 210ms forwards; }
+html[data-splash="short"] .ff-stage, html[data-splash="short"] .ff-glow { animation: ff-fade-in 200ms ease-out both; }
+html[data-splash="short"] .ff-sheen { display: none; }
+
+@media (prefers-reduced-motion: reduce) { .ff-splash { display: none !important; } }
