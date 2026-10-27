@@ -68,6 +68,13 @@
   --ok: 21 128 61; --bad: 225 29 72; --bad-soft: 190 18 60; --info: 3 105 161; --warn: 161 98 7;
 }
 
+/* iPhone: campos com texto menor que 16px fazem o Safari dar zoom ao tocar e deixar a tela "presa" aproximada
+   (a barra inferior some e o layout se desalinha). Em telas de toque, todo campo usa 16px; e o toque duplo não dá zoom. */
+@media (hover: none) and (pointer: coarse) {
+  input, select, textarea { font-size: 16px !important; }
+}
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
 /* Altura da barra inferior (usada pelas folhas para ficarem acima dela). */
 :root { --nav-h: calc(64px + max(env(safe-area-inset-bottom, 0px), 10px)); }
 html, body { overflow-x: hidden; background: rgb(var(--canvas)); color: rgb(var(--fg)); }

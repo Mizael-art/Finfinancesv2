@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddAccountButton from "@/components/finance/AddAccountButton";
+import AddMenuSheet from "@/components/finance/AddMenuSheet";
 import FilterChips from "@/components/finance/FilterChips";
 import NewTransactionFab from "@/components/finance/NewTransactionFab";
 import PeriodSelector from "@/components/finance/PeriodSelector";
@@ -42,6 +43,7 @@ export default function TransactionsView() {
   const today = useMemo(() => todayISODate(), []);
   const [periodId, setPeriodId] = useState<PeriodId>("mes");
   const [periodOpen, setPeriodOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [filter, setFilter] = useState(0);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -129,9 +131,10 @@ export default function TransactionsView() {
         </header>
         {body}
         <div className="fixed bottom-24 right-4 z-30 lg:bottom-8 lg:right-8">
-          <NewTransactionFab />
+          <NewTransactionFab onClick={() => setAddOpen(true)} />
         </div>
       </div>
+      {addOpen && <AddMenuSheet onClose={() => setAddOpen(false)} />}
       {periodOpen && <PeriodSheet value={periodId} onSelect={setPeriodId} onClose={() => setPeriodOpen(false)} />}
       {selected && data && <TransactionDetailSheet key={selected.id} tx={selected} lookups={data} onClose={() => setSelectedId(null)} onDone={toast.show} />}
       <Toast message={toast.message} />

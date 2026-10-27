@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
-import { Field, Select, inputClass as field } from "@/components/ui/FormControls";
+import { DateInput, Field, Select, inputClass as field } from "@/components/ui/FormControls";
 import { FREQUENCY_ADVERB, REPEAT_OPTIONS, type FormKind } from "@/features/transactions/constants";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
 import { formatMonthLabel, todayISODate } from "@/lib/date";
@@ -317,7 +317,7 @@ function TransactionFormBody({ accounts, categories, cards, existing, recurrence
 
       <div className={`grid gap-3 ${isTransfer || editing ? "grid-cols-1" : "grid-cols-2"}`}>
         <Field label="Data" error={tried ? errors.date : ""}>
-          <input type="date" value={date} disabled={isInstallment} onChange={(e) => setDate(e.target.value)} aria-invalid={tried && !!errors.date} className={field} />
+          <DateInput value={date} disabled={isInstallment} onChange={(e) => setDate(e.target.value)} aria-invalid={tried && !!errors.date} />
         </Field>
         {!isTransfer && !editing && (
           <Field label="Repetição" hint={installments > 1 ? "Compras parceladas não se repetem." : undefined}>

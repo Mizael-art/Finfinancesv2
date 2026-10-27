@@ -5,6 +5,7 @@ import { useState } from "react";
 import AccountsSection from "@/components/finance/AccountsSection";
 import AddAccountButton from "@/components/finance/AddAccountButton";
 import FinanceHero from "@/components/finance/FinanceHero";
+import QuickActions from "@/components/finance/QuickActions";
 import RecentTransactionsSection from "@/components/finance/RecentTransactionsSection";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
@@ -70,6 +71,7 @@ export default function HomeView() {
           <AccountsSection accounts={data.accounts.slice(0, 6).map(toBankCard)} />
         </>
       )}
+      {data && <QuickActions />}
       <RecentTransactionsSection />
     </main>
   );

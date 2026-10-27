@@ -1,17 +1,31 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from "react";
 
 export const inputClass =
   "h-12 w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 text-[15px] text-white placeholder:text-white/30 outline-none transition focus:border-violet-400/60 focus:bg-white/[0.06] disabled:opacity-50 aria-[invalid=true]:border-bad/60";
 
 export function Field({ label, error, hint, children }: { label: string; error?: string; hint?: string; children: ReactNode }) {
   return (
-    <label className="flex flex-col gap-1.5">
+    <label className="flex min-w-0 flex-col gap-1.5">
       <span className="text-[13px] font-medium text-white/60">{label}</span>
       {children}
       {error ? <span role="alert" className="text-[12px] text-bad-soft">{error}</span> : hint ? <span className="text-[12px] text-white/35">{hint}</span> : null}
     </label>
+  );
+}
+
+/**
+ * Campo de data sem o visual "torto" do iPhone: o Safari dá largura própria ao campo, centraliza o texto e
+ * deixa ele vazar para o vizinho. Aqui ele ocupa só a própria coluna, alinhado à esquerda, com a mesma altura dos outros.
+ */
+export function DateInput({ className = "", ...rest }: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
+  return (
+    <input
+      type="date"
+      {...rest}
+      className={`${inputClass} block min-h-[48px] min-w-0 max-w-full appearance-none text-left [&::-webkit-date-and-time-value]:min-w-0 [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit]:p-0 [&::-webkit-calendar-picker-indicator]:opacity-60 ${className}`}
+    />
   );
 }
 

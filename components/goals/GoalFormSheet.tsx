@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DangerButton, Field, MoneyInput, PrimaryButton, SecondaryButton, inputClass } from "@/components/ui/FormControls";
+import { DangerButton, DateInput, Field, MoneyInput, PrimaryButton, SecondaryButton, inputClass } from "@/components/ui/FormControls";
 import Sheet from "@/components/ui/Sheet";
 import { GOAL_COLORS } from "@/features/goals/constants";
 import { ValidationError } from "@/lib/errors";
@@ -79,7 +79,7 @@ export default function GoalFormSheet({ goal, onClose, onDone }: Props) {
           </Field>
         )}
         <Field label="Prazo (opcional)">
-          <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} className={inputClass} />
+          <DateInput value={deadline} onChange={(e) => setDeadline(e.target.value)} />
         </Field>
 
         <div>
