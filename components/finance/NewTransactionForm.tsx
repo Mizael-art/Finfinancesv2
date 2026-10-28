@@ -250,6 +250,7 @@ function TransactionFormBody({ accounts, categories, cards, existing, recurrence
           onClick={(e) => e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length)}
           inputMode="numeric"
           autoComplete="off"
+          data-keep-size
           readOnly={isInstallment}
           value={formatBRL(amount)}
           onChange={(e) => setCents(Number(e.target.value.replace(/\D/g, "").slice(0, 11)))}

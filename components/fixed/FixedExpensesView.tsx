@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AddAccountButton from "@/components/finance/AddAccountButton";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import Toast from "@/components/ui/Toast";
+import { groupByDueMonth, nextDueDate } from "@/features/fixed/nextDue";
 import { FREQUENCY_ADVERB } from "@/features/transactions/constants";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
 import { useToast } from "@/hooks/useToast";
+import { monthKey, monthName, todayISODate } from "@/lib/date";
 import { formatCents } from "@/lib/money";
 import { getServices } from "@/services";
 import type { Recurrence } from "@/types/domain";
@@ -26,6 +28,13 @@ function Skeleton() {
 export default function FixedExpensesView() {
   const [form, setForm] = useState<{ key: number; id?: string } | null>(null);
   const toast = useToast();
+  // Vindo do botão "+" ("/fixas?nova=1"): abre o formulário de nova despesa assim que os dados chegam.
+  const [wantNew, setWantNew] = useState(false);
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).get("nova")) return;
+    setWantNew(true);
+    window.history.replaceState(null, "", "/fixas");
+  }, []);
   const { data, error, reload } = useLiveQuery(async () => {
     const s = getServices();
     const [recurrences, categories, accounts, cards] = await Promise.all([s.recurrences.list(), s.categories.list(), s.accounts.list(), s.cards.list()]);
@@ -41,8 +50,18 @@ export default function FixedExpensesView() {
     const cardName = new Map(data.cards.map((c) => [c.id, c.name]));
     const active = expenses.filter((r) => r.active);
     const monthlyTotal = active.filter((r) => r.frequency === "mensal").reduce((sum, r) => sum + r.amountCents, 0);
-    return { expenses, active, paused: expenses.filter((r) => !r.active), expenseCats, catName, accName, cardName, monthlyTotal };
+    // Pelo mês do próximo vencimento: o que já foi lançado neste mês passa para o mês seguinte sozinho.
+    const today = todayISODate();
+    const currentKey = monthKey(today);
+    const entries = active.map((recurrence) => ({ recurrence, next: nextDueDate(recurrence, today) }));
+    const groups = groupByDueMonth(entries);
+    const pendingCents = entries.filter((e) => e.next && monthKey(e.next) === currentKey).reduce((sum, e) => sum + e.recurrence.amountCents, 0);
+    return { expenses, active, paused: expenses.filter((r) => !r.active), expenseCats, catName, accName, cardName, monthlyTotal, currentKey, groups, pendingCents };
   }, [data]);
+
+  useEffect(() => {
+    if (wantNew && data) { setForm({ key: Date.now() }); setWantNew(false); }
+  }, [wantNew, data]);
 
   const editing = form?.id ? data?.recurrences.find((r) => r.id === form.id) : undefined;
   const openNew = () => setForm({ key: Date.now() });
@@ -92,8 +111,20 @@ export default function FixedExpensesView() {
           <p className="text-[12px] font-semibold uppercase tracking-wide text-white/40">Total fixo por mês</p>
           <p className="mt-1 text-[28px] font-semibold tabular-nums tracking-tight text-white">{formatCents(view.monthlyTotal)}</p>
           <p className="text-[13px] text-white/45">{view.active.length} {view.active.length === 1 ? "despesa ativa" : "despesas ativas"}</p>
+          {view.active.length > 0 && (
+            <p className={`mt-3 border-t border-white/[0.06] pt-3 text-[13px] ${view.pendingCents > 0 ? "text-white/70" : "text-ok"}`}>
+              {view.pendingCents > 0 ? `Ainda vence em ${monthName(view.currentKey)}: ${formatCents(view.pendingCents)}` : `Contas de ${monthName(view.currentKey)} em dia — mostrando as próximas.`}
+            </p>
+          )}
         </section>
-        <ul className="mt-4 flex flex-col gap-2.5">{view.active.map(row)}</ul>
+        {view.groups.map((g) => (
+          <section key={g.key} aria-label={g.key} className="mt-5">
+            <p className="mb-2 px-1 text-[12px] font-semibold uppercase tracking-wide text-white/40">
+              {g.key === "sem" ? "Sem próximo vencimento" : g.key === view.currentKey ? `Ainda em ${monthName(g.key)}` : `${monthName(g.key)} ${g.key.slice(0, 4)}`}
+            </p>
+            <ul className="flex flex-col gap-2.5">{g.items.map((e) => row(e.recurrence))}</ul>
+          </section>
+        ))}
         {view.paused.length > 0 && (
           <>
             <p className="mb-2 mt-6 text-[12px] font-semibold uppercase tracking-wide text-white/40">Pausadas</p>
