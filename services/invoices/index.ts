@@ -70,7 +70,7 @@ export function createInvoicesService(storage: Storage) {
       const account = await storage.repo("accounts").get(opts.accountId);
       if (!account) throw new ValidationError("A conta escolhida não existe.", "accountId");
       if (account.archivedAt) throw new ValidationError("A conta escolhida está arquivada.", "accountId");
-      const balance = computeBalanceCents(account, await storage.repo("transactions").list());
+      const balance = computeBalanceCents(account, await storage.repo("transactions").list(), today);
       if (balance < total) {
         throw new ValidationError(`Saldo insuficiente em ${account.name}: faltam ${formatCents(total - balance)} para pagar ${formatCents(total)}.`, "accountId");
       }

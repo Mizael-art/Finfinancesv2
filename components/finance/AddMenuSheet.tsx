@@ -31,6 +31,15 @@ export default function AddMenuSheet({ onClose }: { onClose: () => void }) {
             <span className="block text-[13px] text-white/45">Aluguel, internet, assinaturas — lançada todo mês</span>
           </span>
         </button>
+        <button type="button" onClick={() => go("/importar")} className={row}>
+          <span className={icon}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 3v12" /><path d="M7 10l5 5 5-5" /><path d="M5 21h14" /></svg>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-semibold text-white">Importar extrato</span>
+            <span className="block text-[13px] text-white/45">Traga do banco um arquivo CSV ou OFX</span>
+          </span>
+        </button>
       </div>
     </Sheet>
   );

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import AlertsSection from "@/components/alerts/AlertsSection";
 import AccountsSection from "@/components/finance/AccountsSection";
 import AddAccountButton from "@/components/finance/AddAccountButton";
 import FinanceHero from "@/components/finance/FinanceHero";
@@ -71,6 +72,7 @@ export default function HomeView() {
           <AccountsSection accounts={data.accounts.slice(0, 6).map(toBankCard)} />
         </>
       )}
+      {data && data.accounts.length > 0 && <AlertsSection />}
       {data && <QuickActions />}
       <RecentTransactionsSection />
     </main>

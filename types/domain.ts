@@ -193,6 +193,8 @@ export interface Recurrence extends Entity {
   endDate?: string;
   /** "YYYY-MM-DD" da última ocorrência já gerada (ou lançada à mão). Nada antes dela é gerado de novo. */
   lastGeneratedDate?: string;
+  /** Vencimentos (YYYY-MM-DD) que o usuário marcou como pagos. Só controle de "paguei"; não mexe em saldo. */
+  paidDates?: string[];
 }
 
 export interface IncomeSource extends Entity {

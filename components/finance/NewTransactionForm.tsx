@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import { DateInput, Field, Select, inputClass as field } from "@/components/ui/FormControls";
 import { FREQUENCY_ADVERB, REPEAT_OPTIONS, type FormKind } from "@/features/transactions/constants";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
-import { formatMonthLabel, todayISODate } from "@/lib/date";
+import { readLastPay, saveLastPay } from "@/features/transactions/lastPay";
+import { suggestCategory } from "@/features/transactions/suggest";
+import { addMonths, formatMonthLabel, startOfMonth, todayISODate } from "@/lib/date";
 import { ValidationError } from "@/lib/errors";
 import { formatBRL } from "@/lib/format";
 import { getServices } from "@/services";
@@ -27,10 +29,16 @@ interface Loaded {
   cards: Card[];
   existing?: Transaction;
   recurrence?: Recurrence;
+  /** Histórico (últimos 12 meses) para sugerir categoria. Vazio ao editar. */
+  history: Transaction[];
+  /** Lançamento a repetir (?repetir=ID): preenche tudo, menos a data. */
+  template?: Transaction;
 }
 
 /** Carrega o que o formulário precisa e decide o que mostrar: carregando, erro, pré-requisitos ou o formulário. */
 export default function NewTransactionForm({ transactionId }: { transactionId?: string }) {
+  const search = useSearchParams();
+  const repeatId = transactionId ? undefined : search.get("repetir") ?? undefined;
   const { data, error, reload } = useLiveQuery<Loaded>(async () => {
     const s = getServices();
     // Garante Alimentação, Transporte etc. mesmo se o app foi aberto antes de existir qualquer categoria.
@@ -39,8 +47,11 @@ export default function NewTransactionForm({ transactionId }: { transactionId?: 
       s.accounts.list(), s.categories.list(), s.cards.list(), transactionId ? s.transactions.get(transactionId) : Promise.resolve(undefined),
     ]);
     const recurrence = existing?.recurrenceId ? await s.recurrences.get(existing.recurrenceId) : undefined;
-    return { accounts, categories, cards, existing, recurrence };
-  }, [transactionId]);
+    const history = transactionId ? [] : (await s.transactions.list({ from: addMonths(startOfMonth(todayISODate()), -12) })).filter((t) => (t.type === "despesa" || t.type === "receita") && !!t.categoryId);
+    const picked = repeatId ? await s.transactions.get(repeatId) : undefined;
+    const template = picked && picked.type !== "pagamento_fatura" && !picked.installmentGroupId ? picked : undefined;
+    return { accounts, categories, cards, existing, recurrence, history, template };
+  }, [transactionId, repeatId]);
 
   if (!data && error) return <ErrorState onRetry={reload} />;
   if (!data) return <div aria-busy="true" aria-label="Carregando" className="h-64 animate-pulse rounded-xl border border-white/[0.06] bg-white/[0.03] motion-reduce:animate-none" />;
@@ -78,20 +89,26 @@ export default function NewTransactionForm({ transactionId }: { transactionId?: 
   return <TransactionFormBody key={data.existing?.id ?? "new"} {...data} />;
 }
 
-function TransactionFormBody({ accounts, categories, cards, existing, recurrence }: Loaded) {
+function TransactionFormBody({ accounts, categories, cards, existing, recurrence, history, template }: Loaded) {
   const params = useSearchParams();
   const editing = !!existing;
   const isInstallment = !!existing?.installmentGroupId;
+  /** Quem preenche o formulário: a transação editada ou a que está sendo repetida. */
+  const seed = existing ?? template;
+  const last = useMemo(() => (seed ? {} : readLastPay()), [seed]);
+  const lastAccountOk = !!last.accountId && accounts.some((a) => a.id === last.accountId);
+  const lastCardOk = !!last.cardId && cards.some((c) => c.id === last.cardId);
 
-  const [kind, setKind] = useState<FormKind>((existing?.type as FormKind | undefined) ?? (params.get("tipo") === "transferencia" ? "transferencia" : "despesa"));
-  const [cents, setCents] = useState(existing?.amountCents ?? 0);
-  const [description, setDescription] = useState(existing?.description ?? "");
-  const [categoryId, setCategoryId] = useState(existing?.categoryId ?? "");
-  const [accountId, setAccountId] = useState(existing?.accountId ?? accounts[0].id);
-  const [toAccountId, setToAccountId] = useState(existing?.toAccountId ?? accounts[1]?.id ?? accounts[0].id);
+  const [kind, setKind] = useState<FormKind>((seed?.type as FormKind | undefined) ?? (params.get("tipo") === "transferencia" ? "transferencia" : "despesa"));
+  const [cents, setCents] = useState(seed?.amountCents ?? 0);
+  const [description, setDescription] = useState(seed?.description ?? "");
+  const [categoryId, setCategoryId] = useState(seed?.categoryId ?? "");
+  const [categoryTouched, setCategoryTouched] = useState(!!seed?.categoryId);
+  const [accountId, setAccountId] = useState(seed?.accountId ?? (lastAccountOk ? last.accountId! : accounts[0].id));
+  const [toAccountId, setToAccountId] = useState(seed?.toAccountId ?? accounts[1]?.id ?? accounts[0].id);
   const [date, setDate] = useState(existing?.date ?? todayISODate());
-  const [payWith, setPayWith] = useState<"conta" | "cartao">(existing?.cardId ? "cartao" : "conta");
-  const [cardId, setCardId] = useState(existing?.cardId ?? cards[0]?.id ?? "");
+  const [payWith, setPayWith] = useState<"conta" | "cartao">(seed?.cardId ? "cartao" : last.payWith === "cartao" && lastCardOk ? "cartao" : "conta");
+  const [cardId, setCardId] = useState(seed?.cardId ?? (lastCardOk ? last.cardId! : cards[0]?.id ?? ""));
   const [installments, setInstallments] = useState(existing?.installmentTotal ?? 1);
   const [repeat, setRepeat] = useState<"" | RecurrenceFrequency>("");
   const [notes, setNotes] = useState(existing?.notes ?? "");
@@ -105,6 +122,14 @@ function TransactionFormBody({ accounts, categories, cards, existing, recurrence
   const useCard = kind === "despesa" && payWith === "cartao";
   const categoryOptions = useMemo(() => categories.filter((c) => c.kind === kind), [categories, kind]);
   const selectedCategory = categoryOptions.find((c) => c.id === categoryId) ?? categoryOptions[0];
+  const suggestion = useMemo(() => {
+    if (editing || isTransfer) return undefined;
+    const sg = suggestCategory(history, description, kind);
+    return sg && categoryOptions.some((c) => c.id === sg.categoryId) ? sg : undefined;
+  }, [editing, isTransfer, kind, history, description, categoryOptions]);
+  useEffect(() => {
+    if (suggestion?.exact && !categoryTouched) setCategoryId(suggestion.categoryId);
+  }, [suggestion?.categoryId, suggestion?.exact, categoryTouched]);
   const amount = cents / 100;
   const canTransfer = accounts.length >= 2;
   /** O valor é montado da direita para a esquerda; o cursor fica sempre no fim (tocar no meio não embaralha os dígitos). */
@@ -133,13 +158,14 @@ function TransactionFormBody({ accounts, categories, cards, existing, recurrence
   const switchKind = (k: FormKind) => {
     setKind(k);
     setCategoryId("");
+    setCategoryTouched(false);
     if (k !== "despesa") setPayWith("conta");
     if (k === "transferencia") setRepeat("");
   };
 
   const reset = () => {
     setCents(0); setDescription(""); setNotes(""); setInstallments(1); setRepeat("");
-    setTried(false); setSaved(null); setFormError("");
+    setTried(false); setSaved(null); setFormError(""); setCategoryTouched(false);
   };
 
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? "conta";
@@ -173,7 +199,8 @@ function TransactionFormBody({ accounts, categories, cards, existing, recurrence
         }
         else await s.create(input);
       }
-      setSaved(existing ? "Transação atualizada" : "Transação registrada");
+      if (!existing) saveLastPay({ accountId, cardId: useCard ? cardId : undefined, payWith: useCard ? "cartao" : "conta" });
+      setSaved(existing ? "Transação atualizada" : date > todayISODate() ? "Transação agendada" : "Transação registrada");
     } catch (err) {
       setFormError(err instanceof ValidationError ? err.message : "Não foi possível salvar agora. Seus dados continuam aqui — tente novamente.");
     } finally {
@@ -194,14 +221,19 @@ function TransactionFormBody({ accounts, categories, cards, existing, recurrence
           {useCard && installments > 1 ? `, em ${installments}x` : ""}
           {repeat && !editing ? `, repetindo ${FREQUENCY_ADVERB[repeat]}` : ""}.
         </p>
+        {date > todayISODate() && !isTransfer && (
+          <p role="status" className="mt-4 rounded-lg border border-amber-400/30 bg-amber-400/[0.08] px-4 py-3 text-left text-[13px] leading-relaxed text-white/70">
+            Agendada para {date.slice(8, 10)}/{date.slice(5, 7)}/{date.slice(0, 4)}. O saldo só muda nesse dia. Para ver, editar ou apagar, toque em &ldquo;Ver lançamentos futuros&rdquo;.
+          </p>
+        )}
         <div className="mt-6 grid gap-2.5">
           {!editing && (
             <button type="button" onClick={reset} className="h-12 rounded-lg bg-violet-500 hover:bg-violet-600 text-[15px] font-semibold text-white transition active:scale-[0.98]">
               Registrar outra
             </button>
           )}
-          <Link href="/transacoes" className="grid h-12 place-items-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-[15px] font-semibold text-white transition active:scale-[0.98]">
-            Ver transações
+          <Link href={date > todayISODate() ? "/transacoes?futuras=1" : "/transacoes"} className="grid h-12 place-items-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-[15px] font-semibold text-white transition active:scale-[0.98]">
+            {date > todayISODate() ? "Ver lançamentos futuros" : "Ver transações"}
           </Link>
         </div>
       </div>
@@ -264,12 +296,20 @@ function TransactionFormBody({ accounts, categories, cards, existing, recurrence
       <Field label={isTransfer ? "Descrição (opcional)" : "Descrição"} error={tried ? errors.description : ""}>
         <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={120} placeholder={isTransfer ? "Ex.: Reserva do mês" : "Ex.: Mercado"} aria-invalid={tried && !!errors.description} className={field} />
       </Field>
+      {suggestion && !categoryTouched && selectedCategory?.id !== suggestion.categoryId && (
+        <button type="button" onClick={() => { setCategoryId(suggestion.categoryId); setCategoryTouched(true); }} className="-mt-2 self-start rounded-full border border-violet-400/40 bg-violet-500/10 px-3.5 py-1.5 text-[13px] font-medium text-white transition active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-400">
+          Sugestão: {categoryOptions.find((c) => c.id === suggestion.categoryId)?.name}
+        </button>
+      )}
 
       {!isTransfer && (
         <Field label="Categoria">
-          <Select value={selectedCategory?.id ?? ""} onChange={(e) => setCategoryId(e.target.value)}>
+          <Select value={selectedCategory?.id ?? ""} onChange={(e) => { setCategoryId(e.target.value); setCategoryTouched(true); }}>
             {categoryOptions.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>
+          {suggestion?.exact && !categoryTouched && selectedCategory?.id === suggestion.categoryId && (
+            <span className="text-[12px] text-white/40">Categoria sugerida pelo seu histórico.</span>
+          )}
         </Field>
       )}
 

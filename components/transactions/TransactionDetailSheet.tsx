@@ -115,6 +115,11 @@ export default function TransactionDetailSheet({ tx, lookups, onClose, onDone }:
             <Link href={`/transacoes/${tx.id}/editar`} className="flex h-12 w-full items-center justify-center rounded-lg bg-violet-500 hover:bg-violet-600 text-[15px] font-semibold text-white transition active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300">
               Editar
             </Link>
+            {(tx.type === "despesa" || tx.type === "receita" || tx.type === "transferencia") && !tx.installmentGroupId && (
+              <Link href={`/transacoes/nova?repetir=${tx.id}`} className="flex h-12 w-full items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-[15px] font-semibold text-white transition active:scale-[0.98] hover:bg-white/[0.07] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400">
+                Repetir lançamento
+              </Link>
+            )}
             <DangerButton onClick={() => setConfirming(true)}>Excluir</DangerButton>
           </div>
         )}

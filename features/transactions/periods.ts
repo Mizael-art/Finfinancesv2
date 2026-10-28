@@ -1,12 +1,14 @@
+import { addDays } from "@/lib/date";
 import { addMonthKey, currentMonthKey, financialMonthRange } from "@/lib/financialMonth";
 
-export type PeriodId = "mes" | "mes_passado" | "tres_meses" | "ano" | "tudo";
+export type PeriodId = "mes" | "mes_passado" | "tres_meses" | "ano" | "futuras" | "tudo";
 
 export const PERIODS: { id: PeriodId; label: string; short: string }[] = [
   { id: "mes", label: "Esse mês", short: "Esse Mês" },
   { id: "mes_passado", label: "Mês passado", short: "Mês passado" },
   { id: "tres_meses", label: "Últimos 3 meses", short: "3 meses" },
   { id: "ano", label: "Esse ano", short: "Esse ano" },
+  { id: "futuras", label: "Futuras (agendadas)", short: "Futuras" },
   { id: "tudo", label: "Todo o período", short: "Tudo" },
 ];
 
@@ -22,6 +24,7 @@ export function rangeFor(id: PeriodId, today: string, firstDay = 1): { from?: st
     case "mes_passado": return financialMonthRange(addMonthKey(cur, -1), firstDay);
     case "tres_meses": return { from: financialMonthRange(addMonthKey(cur, -2), firstDay).from, to: financialMonthRange(cur, firstDay).to };
     case "ano": return { from: `${today.slice(0, 4)}-01-01`, to: `${today.slice(0, 4)}-12-31` };
+    case "futuras": return { from: addDays(today, 1) };
     case "tudo": return {};
   }
 }

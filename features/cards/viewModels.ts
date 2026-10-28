@@ -15,3 +15,6 @@ export function usagePercent(usedCents: number, limitCents: number): { raw: numb
   const raw = Math.round((usedCents / limitCents) * 100);
   return { raw, bar: Math.max(0, Math.min(100, raw)) };
 }
+
+/** Melhor dia para comprar: o dia seguinte ao fechamento (a compra cai na fatura mais distante do vencimento). */
+export const bestPurchaseDay = (closingDay: number): number => (closingDay >= 31 ? 1 : closingDay + 1);

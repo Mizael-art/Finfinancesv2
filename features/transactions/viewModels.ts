@@ -32,10 +32,10 @@ export function transactionNote(t: DomainTransaction): string | undefined {
 }
 
 /** Transações do domínio -> linhas da lista (valor em reais só na borda da tela). */
-export function toTransactionItems(txs: DomainTransaction[], lookups: Lookups): TransactionItemData[] {
+export function toTransactionItems(txs: DomainTransaction[], lookups: Lookups, today?: string): TransactionItemData[] {
   const n = makeNamers(lookups);
   return txs.map((t) => {
-    const base = { id: t.id, description: t.description, amount: t.amountCents / 100, date: t.date, note: transactionNote(t), categoryColor: n.categoryColor(t.categoryId) };
+    const base = { id: t.id, description: t.description, amount: t.amountCents / 100, date: t.date, note: [today && t.date > today ? "Agendada" : undefined, transactionNote(t)].filter(Boolean).join(" · ") || undefined, categoryColor: n.categoryColor(t.categoryId) };
     switch (t.type) {
       case "receita":
         return { ...base, type: "receita" as const, category: n.category(t.categoryId), account: n.account(t.accountId) };

@@ -44,7 +44,7 @@ export function createAccountsService(storage: Storage) {
   async function listWithBalances(opts: { includeArchived?: boolean } = {}): Promise<AccountWithBalance[]> {
     const [accounts, txs] = await Promise.all([list(opts), storage.repo("transactions").list()]);
     const today = todayISODate();
-    return accounts.map((a) => ({ ...a, balanceCents: computeBalanceCents(a, txs), series: computeBalanceSeries(a, txs, today) }));
+    return accounts.map((a) => ({ ...a, balanceCents: computeBalanceCents(a, txs, today), series: computeBalanceSeries(a, txs, today) }));
   }
 
   return {
@@ -60,7 +60,7 @@ export function createAccountsService(storage: Storage) {
       requireCents(targetCents, "balance", "saldo", Number.MIN_SAFE_INTEGER);
       const account = await crud.require(id);
       const txs = await storage.repo("transactions").list();
-      const delta = targetCents - computeBalanceCents(account, txs);
+      const delta = targetCents - computeBalanceCents(account, txs, todayISODate());
       return crud.update(id, { initialBalanceCents: account.initialBalanceCents + delta });
     },
 
@@ -100,7 +100,7 @@ export function createAccountsService(storage: Storage) {
     async overview() {
       const [all, txs, invoices] = await Promise.all([list({ includeArchived: true }), storage.repo("transactions").list(), storage.repo("invoices").list()]);
       const today = todayISODate();
-      const withBalance: AccountWithBalance[] = all.map((a) => ({ ...a, balanceCents: computeBalanceCents(a, txs), series: computeBalanceSeries(a, txs, today) }));
+      const withBalance: AccountWithBalance[] = all.map((a) => ({ ...a, balanceCents: computeBalanceCents(a, txs, today), series: computeBalanceSeries(a, txs, today) }));
       const active = withBalance.filter((a) => !a.archivedAt);
       const balances = new Map(active.map((a) => [a.id, a.balanceCents]));
       return {

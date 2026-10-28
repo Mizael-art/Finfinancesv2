@@ -10,6 +10,7 @@ export const MORE_LINKS: MoreLink[] = [
   { href: "/faturas", label: "Faturas", description: "Faturas dos cartões e pagamentos", icon: ["M6 3h12v18l-3-2-3 2-3-2-3 2z", "M9 8h6M9 12h6"] },
   { href: "/planejamento", label: "Planejamento", description: "O que vem nos próximos meses", icon: ["M3 3v18h18", "M7 15l4-4 3 3 5-6"] },
   { href: "/fixas", label: "Despesas fixas", description: "Aluguel, internet, assinaturas", icon: ["M17 2l4 4-4 4", "M3 11V9a3 3 0 0 1 3-3h15", "M7 22l-4-4 4-4", "M21 13v2a3 3 0 0 1-3 3H3"] },
+  { href: "/importar", label: "Importar e exportar", description: "Extrato do banco (CSV/OFX) e planilha", icon: ["M12 3v12", "M7 10l5 5 5-5", "M5 21h14"] },
   { href: "/categorias", label: "Categorias", description: "Organize receitas e despesas", icon: ["M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"] },
   { href: "/orcamentos", label: "Orçamentos", description: "Limites de gasto por categoria", icon: ["M12 3a9 9 0 1 0 9 9h-9z", "M15 3.5A9 9 0 0 1 20.5 9H15z"] },
   { href: "/metas", label: "Metas", description: "Juntar dinheiro para seus objetivos", icon: ["M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", "M12 12h.01"] },

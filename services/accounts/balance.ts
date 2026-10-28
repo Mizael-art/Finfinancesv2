@@ -21,7 +21,10 @@ export function effectOnAccount(t: Transaction, accountId: string): number {
   }
 }
 
-/** Saldo = saldo inicial + efeito de todas as transações (derivado, nunca gravado). */
+/**
+ * Saldo = saldo inicial + efeito das transações (derivado, nunca gravado). Com `upTo` (use a data de hoje), lançamentos
+ * futuros/agendados não entram: o dinheiro só sai ou entra no dia.
+ */
 export function computeBalanceCents(account: Pick<Account, "id" | "initialBalanceCents">, txs: Transaction[], upTo?: string): number {
   let total = account.initialBalanceCents;
   for (const t of txs) {

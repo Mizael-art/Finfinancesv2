@@ -72,7 +72,8 @@ export function createRecurrencesService(storage: Storage) {
       const dates = occurrencesUpTo(rec, today);
       if (dates.length === 0) continue;
 
-      const category = categories.find((c) => c.id === rec.categoryId);
+      // Sem categoria (ex.: despesas fixas do onboarding): usa "Outros" para não deixar de lançar. Dá para escolher outra depois.
+      const category = rec.categoryId ? categories.find((c) => c.id === rec.categoryId) : categories.find((c) => c.name === "Outros" && c.kind === rec.type);
       const account = rec.cardId ? undefined : activeAccounts.find((a) => a.id === rec.accountId) ?? activeAccounts[0];
       if (!category || category.kind !== rec.type || (!rec.cardId && !account)) {
         skipped += dates.length; // não dá para lançar ainda; mantém a repetição como está
@@ -93,7 +94,7 @@ export function createRecurrencesService(storage: Storage) {
           if (existing.has(id)) continue;
           const base = normalizeTransaction({
             type: rec.type, amountCents: rec.amountCents, description: rec.description, date,
-            categoryId: rec.categoryId, accountId: account?.id, cardId: rec.cardId, recurrenceId: rec.id,
+            categoryId: category.id, accountId: account?.id, cardId: rec.cardId, recurrenceId: rec.id,
           } as NewEntity<Transaction>);
           const invoice = card ? await resolver.resolve(card, date) : undefined;
           recOps.push({ store: "transactions", type: "put", value: buildEntity<Transaction>({ ...base, invoiceId: invoice?.id }, id) });
@@ -121,6 +122,14 @@ export function createRecurrencesService(storage: Storage) {
     generateDue,
     /** Para de repetir daqui para frente (as transações já lançadas ficam). */
     stop: (id: string) => crud.update(id, { active: false }),
+    /** Marca (ou desmarca) o vencimento `dueDate` como pago. Guarda só os últimos 24 vencimentos. */
+    async setPaid(id: string, dueDate: string, paid: boolean) {
+      const rec = await crud.get(id);
+      if (!rec) throw new ValidationError("Despesa fixa não encontrada.", "id");
+      const set = new Set(rec.paidDates ?? []);
+      if (paid) set.add(dueDate); else set.delete(dueDate);
+      return crud.update(id, { paidDates: [...set].sort().slice(-24) });
+    },
   };
 }
 export type RecurrencesService = ReturnType<typeof createRecurrencesService>;

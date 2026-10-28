@@ -8,7 +8,7 @@ import ErrorState from "@/components/ui/ErrorState";
 import { SecondaryButton } from "@/components/ui/FormControls";
 import Toast from "@/components/ui/Toast";
 import InvoiceDetailSheet from "@/components/invoices/InvoiceDetailSheet";
-import { usagePercent } from "@/features/cards/viewModels";
+import { bestPurchaseDay, usagePercent } from "@/features/cards/viewModels";
 import { useCardsOverview } from "@/features/cards/useCardsOverview";
 import { STATUS_LABEL, STATUS_TONE } from "@/features/invoices/viewModels";
 import { useToast } from "@/hooks/useToast";
@@ -131,6 +131,9 @@ export default function CardsView() {
           </div>
           <p className="mt-2 text-[12px] text-white/45">
             {current.overLimit ? "Limite ultrapassado · " : ""}Fecha dia {current.closingDay} · Vence dia {current.dueDay}
+          </p>
+          <p className="mt-1 text-[12px] text-white/45">
+            Melhor dia de compra: a partir do dia {bestPurchaseDay(current.closingDay)}
           </p>
         </section>
 

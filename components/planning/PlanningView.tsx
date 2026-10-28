@@ -1,13 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import AddAccountButton from "@/components/finance/AddAccountButton";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
-import { PLAN_GROUP_LABEL, PLAN_GROUP_ORDER, buildPlan, type PlanMonth } from "@/features/planning/projection";
+import { averageFreeCents, firstNegativeMonth, goalHints } from "@/features/planning/goals";
+import { PLAN_GROUP_LABEL, PLAN_GROUP_ORDER, buildPlan, estimateVariable, type PlanMonth } from "@/features/planning/projection";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
-import { addDays, formatDayMonth, monthKey, monthName, todayISODate } from "@/lib/date";
+import { addMonths, formatDayMonth, monthKey, monthName, startOfMonth, todayISODate } from "@/lib/date";
 import { formatCents } from "@/lib/money";
 import { getServices } from "@/services";
 
@@ -29,27 +31,42 @@ export default function PlanningView() {
   const router = useRouter();
   const [months, setMonths] = useState<(typeof HORIZONS)[number]>(6);
   const [open, setOpen] = useState<string | null | undefined>(undefined);
+  const [withEstimate, setWithEstimate] = useState(true);
 
   const { data, error, reload } = useLiveQuery(async () => {
     const s = getServices();
     const today = todayISODate();
-    const [transactions, recurrences, incomes] = await Promise.all([s.transactions.list({ from: addDays(today, 1) }), s.recurrences.list(), s.income.list()]);
-    return { today, transactions, recurrences, incomes };
+    const [transactions, recurrences, incomes, goals, invoices] = await Promise.all([s.transactions.list({ from: addMonths(startOfMonth(today), -3) }), s.recurrences.list(), s.income.list(), s.goals.list(), s.invoices.views({ today })]);
+    return { today, transactions, recurrences, incomes, goals, invoices };
   }, []);
 
+  const estimate = useMemo(() => (data ? estimateVariable(data.transactions, data.today) : null), [data]);
   // Quando as contas do mês atual já passaram (nada mais a vencer nele), começa direto pelo mês seguinte.
   const plan = useMemo(() => {
-    if (!data) return null;
+    if (!data || !estimate) return null;
     const currentKey = monthKey(data.today);
-    return buildPlan({ ...data, months }).filter((m) => !(m.key === currentKey && m.items.length === 0));
-  }, [data, months]);
+    return buildPlan({ ...data, months, variableMonthlyCents: withEstimate ? estimate.monthlyCents : 0, variableSoFarCents: estimate.soFarCents })
+      .filter((m) => !(m.key === currentKey && m.items.length === 0));
+  }, [data, estimate, months, withEstimate]);
+  // Faturas de cartão por mês de vencimento: só informativo (as compras já contam nos gastos do mês em que foram feitas).
+  const invoicesByMonth = useMemo(() => {
+    const map = new Map<string, NonNullable<typeof data>["invoices"]>();
+    for (const v of data?.invoices ?? []) {
+      if (v.status === "paga" || v.totalCents <= 0) continue;
+      const k = monthKey(v.invoice.dueDate);
+      map.set(k, [...(map.get(k) ?? []), v]);
+    }
+    return map;
+  }, [data]);
   const sum = useMemo(() => {
     if (!plan) return null;
     const income = plan.reduce((s, m) => s + m.incomeCents, 0);
     const expense = plan.reduce((s, m) => s + m.expenseCents, 0);
-    return { income, expense, balance: income - expense, empty: plan.every((m) => m.items.length === 0) };
-  }, [plan]);
+    return { income, expense, balance: income - expense, empty: plan.every((m) => m.items.length === 0 && !invoicesByMonth.has(m.key)) };
+  }, [plan, invoicesByMonth]);
 
+  const negative = useMemo(() => (plan ? firstNegativeMonth(plan) : undefined), [plan]);
+  const hints = useMemo(() => (plan && data ? goalHints(data.goals, averageFreeCents(plan), data.today) : []), [plan, data]);
   const maxExpense = plan ? Math.max(1, ...plan.map((m) => m.expenseCents)) : 1;
   const openKey = open === undefined ? plan?.find((m) => m.items.length > 0)?.key ?? null : open;
 
@@ -87,30 +104,70 @@ export default function PlanningView() {
         </button>
         {isOpen && (
           <div className="border-t border-white/[0.06] px-4 py-3">
-            {m.items.length === 0 ? (
+            {m.items.length === 0 && m.variableCents === 0 && !invoicesByMonth.has(m.key) ? (
               <p className="py-2 text-[13px] text-white/45">Nada previsto para este mês.</p>
             ) : (
-              PLAN_GROUP_ORDER.filter((g) => m.items.some((i) => i.group === g)).map((g) => {
-                const rows = m.items.filter((i) => i.group === g);
-                return (
-                  <section key={g} className="mb-3 last:mb-0">
+              <>
+                {PLAN_GROUP_ORDER.filter((g) => m.items.some((i) => i.group === g)).map((g) => {
+                  const rows = m.items.filter((i) => i.group === g);
+                  return (
+                    <section key={g} className="mb-3 last:mb-0">
+                      <p className="mb-1.5 flex justify-between text-[12px] font-semibold uppercase tracking-wide text-white/40">
+                        <span>{PLAN_GROUP_LABEL[g]}</span>
+                        <span className="tabular-nums">{formatCents(m.byGroup[g])}</span>
+                      </p>
+                      <ul className="flex flex-col gap-1">
+                        {rows.slice(0, MAX_ROWS).map((i) => (
+                          <li key={i.id}>
+                            {(() => {
+                              const inner = (
+                                <>
+                                  <span className="w-10 shrink-0 tabular-nums text-white/40">{formatDayMonth(i.date)}</span>
+                                  <span className="min-w-0 flex-1 truncate text-white/85">{i.label}</span>
+                                  <span className={`shrink-0 tabular-nums ${g === "renda" ? "text-ok" : "text-white"}`}>{formatCents(i.cents)}</span>
+                                </>
+                              );
+                              return i.txId
+                                ? <Link href={`/transacoes/${i.txId}/editar`} className="-mx-1.5 flex items-baseline gap-2 rounded-md px-1.5 py-1 text-[14px] transition hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-400" aria-label={`Abrir ${i.label} para editar ou apagar`}>{inner}</Link>
+                                : <div className="flex items-baseline gap-2 text-[14px]">{inner}</div>;
+                            })()}
+                          </li>
+                        ))}
+                      </ul>
+                      {rows.length > MAX_ROWS && <p className="mt-1 text-[12px] text-white/40">e mais {rows.length - MAX_ROWS} itens</p>}
+                    </section>
+                  );
+                })}
+                {(invoicesByMonth.get(m.key) ?? []).length > 0 && (
+                  <section className="mb-1 mt-3 border-t border-white/[0.06] pt-3">
                     <p className="mb-1.5 flex justify-between text-[12px] font-semibold uppercase tracking-wide text-white/40">
-                      <span>{PLAN_GROUP_LABEL[g]}</span>
-                      <span className="tabular-nums">{formatCents(m.byGroup[g])}</span>
+                      <span>Faturas do cartão a pagar</span>
+                      <span className="tabular-nums">{formatCents((invoicesByMonth.get(m.key) ?? []).reduce((s, v) => s + v.totalCents, 0))}</span>
                     </p>
                     <ul className="flex flex-col gap-1">
-                      {rows.slice(0, MAX_ROWS).map((i) => (
-                        <li key={i.id} className="flex items-baseline gap-2 text-[14px]">
-                          <span className="w-10 shrink-0 tabular-nums text-white/40">{formatDayMonth(i.date)}</span>
-                          <span className="min-w-0 flex-1 truncate text-white/85">{i.label}</span>
-                          <span className={`shrink-0 tabular-nums ${g === "renda" ? "text-ok" : "text-white"}`}>{formatCents(i.cents)}</span>
+                      {(invoicesByMonth.get(m.key) ?? []).map((v) => (
+                        <li key={v.invoice.id}>
+                          <Link href="/faturas" className="-mx-1.5 flex items-baseline gap-2 rounded-md px-1.5 py-1 text-[14px] transition hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-400">
+                            <span className="w-10 shrink-0 tabular-nums text-white/40">{formatDayMonth(v.invoice.dueDate)}</span>
+                            <span className="min-w-0 flex-1 truncate text-white/85">Fatura {v.cardName}</span>
+                            <span className="shrink-0 tabular-nums text-white">{formatCents(v.totalCents)}</span>
+                          </Link>
                         </li>
                       ))}
                     </ul>
-                    {rows.length > MAX_ROWS && <p className="mt-1 text-[12px] text-white/40">e mais {rows.length - MAX_ROWS} itens</p>}
+                    <p className="mt-1 text-[12px] text-white/35">Para acompanhar quando o dinheiro sai da conta. Não entra na soma do mês: as compras já contam nos gastos de quando foram feitas.</p>
                   </section>
-                );
-              })
+                )}
+                {m.variableCents > 0 && estimate && (
+                  <section className="mb-1 mt-3 border-t border-white/[0.06] pt-3">
+                    <p className="flex justify-between text-[12px] font-semibold uppercase tracking-wide text-white/40">
+                      <span>Gastos do dia a dia (estimativa)</span>
+                      <span className="tabular-nums">{formatCents(m.variableCents)}</span>
+                    </p>
+                    <p className="mt-1 text-[12px] text-white/35">Média dos últimos {estimate.monthsUsed} {estimate.monthsUsed === 1 ? "mês" : "meses"}: mercado, lanches, transporte e outros gastos que não são fixos nem parcelados.</p>
+                  </section>
+                )}
+              </>
             )}
           </div>
         )}
@@ -142,9 +199,40 @@ export default function PlanningView() {
             <div><p className="text-[11px] uppercase tracking-wide text-white/40">Sobra prevista</p><p className={`text-[15px] font-semibold tabular-nums ${tone(sum.balance)}`}>{formatCents(sum.balance)}</p></div>
           </div>
         </section>
+        {negative && (
+          <p role="alert" className="mt-4 rounded-xl border border-bad/35 bg-bad/10 px-4 py-3 text-[13px] leading-relaxed text-bad-soft">
+            Atenção: em {monthName(negative.key)} a sobra prevista fica negativa ({formatCents(negative.balanceCents)}). Vale reduzir gastos ou antecipar uma receita.
+          </p>
+        )}
+        {estimate && estimate.monthsUsed > 0 && (
+          <label className="mt-4 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
+            <span className="min-w-0">
+              <span className="block text-[14px] font-medium text-white">Incluir gastos do dia a dia</span>
+              <span className="block text-[12px] text-white/45">Estimativa de {formatCents(estimate.monthlyCents)} por mês, pela média dos últimos {estimate.monthsUsed} {estimate.monthsUsed === 1 ? "mês" : "meses"}.</span>
+            </span>
+            <input type="checkbox" checked={withEstimate} onChange={(e) => setWithEstimate(e.target.checked)} className="h-5 w-5 shrink-0 accent-violet-500" />
+          </label>
+        )}
         <ul className="mt-4 flex flex-col gap-2.5">{plan.map(card)}</ul>
+        {hints.length > 0 && (
+          <section aria-label="Metas" className="mt-5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5">
+            <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-white/40">Suas metas neste planejamento</p>
+            <ul className="flex flex-col gap-2.5">
+              {hints.map((h) => (
+                <li key={h.goalId} className="text-[14px] leading-snug">
+                  <span className="font-semibold text-white">{h.name}</span>
+                  <span className="block text-[13px] text-white/55">
+                    {h.kind === "prazo"
+                      ? h.fits ? `Cabe no planejamento: guardar ${formatCents(h.needPerMonthCents ?? 0)} por mês chega no prazo.` : `Pede ${formatCents(h.needPerMonthCents ?? 0)} por mês, mais do que a sobra prevista.`
+                      : h.monthsToFinish ? `No ritmo da sobra prevista, termina em cerca de ${h.monthsToFinish} ${h.monthsToFinish === 1 ? "mês" : "meses"}.` : "Sem sobra prevista para avançar nesta meta."}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <p className="mt-5 text-[12px] leading-relaxed text-white/35">
-          A previsão usa o que já está cadastrado: despesas fixas, parcelas e compras com data futura, receitas que se repetem e rendas fixas. Gastos do dia a dia que ainda não aconteceram não entram.
+          A previsão usa o que já está cadastrado: despesas fixas, parcelas e compras com data futura, receitas que se repetem e rendas fixas{withEstimate && estimate && estimate.monthsUsed > 0 ? ", mais a estimativa dos gastos do dia a dia" : ""}.
         </p>
       </>
     );

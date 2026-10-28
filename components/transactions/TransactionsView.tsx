@@ -22,7 +22,9 @@ import { useToast } from "@/hooks/useToast";
 import { todayISODate } from "@/lib/date";
 import { filterTransactions, summarizeTransactions } from "@/services/transactions/rules";
 import type { TransactionType } from "@/types/domain";
+import FutureBanner from "./FutureBanner";
 import PeriodSheet from "./PeriodSheet";
+import UpcomingList from "./UpcomingList";
 import TransactionDetailSheet from "./TransactionDetailSheet";
 
 const FILTERS = ["Todas", "Receitas", "Despesas", "Transferências"];
@@ -56,7 +58,9 @@ export default function TransactionsView() {
   // Vindo do Início ("/transacoes?ver=ID"): abre os detalhes dessa transação, em qualquer período.
   const [pendingId, setPendingId] = useState<string | null>(null);
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("ver");
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("futuras")) { setPeriodId("futuras"); window.history.replaceState(null, "", "/transacoes"); return; }
+    const id = sp.get("ver");
     if (!id) return;
     setPeriodId("tudo");
     setPendingId(id);
@@ -89,18 +93,20 @@ export default function TransactionsView() {
   } else {
     const summary = summarizeTransactions(data.transactions);
     const filtered = filterTransactions(data.transactions, { type: FILTER_TYPE[filter], search: query });
-    const items = toTransactionItems(filtered, data);
+    const items = toTransactionItems(filtered, data, today);
     const periodLabel = PERIODS.find((p) => p.id === periodId)!.label.toLowerCase();
 
     body = (
       <>
         {error && <div className="mb-4"><ErrorState title="Não foi possível atualizar" onRetry={reload} /></div>}
+        {periodId !== "futuras" && periodId !== "tudo" && <FutureBanner today={today} onOpen={() => setPeriodId("futuras")} />}
         <div className="mb-4">
           <TransactionsSummary income={summary.incomeCents / 100} expenses={summary.expenseCents / 100} />
         </div>
         <div className="mb-4"><SearchBar value={query} onChange={setQuery} /></div>
         <div className="mb-5"><FilterChips active={filter} onSelect={setFilter} /></div>
 
+        {periodId === "futuras" && <UpcomingList today={today} />}
         {data.transactions.length === 0 ? (
           <EmptyState
             icon={plusIcon}

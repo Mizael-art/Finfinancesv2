@@ -49,3 +49,29 @@ describe("buildPlan", () => {
     expect(plan[1].byGroup.fixa + plan[1].byGroup.lancada).toBe(120000);
   });
 });
+
+import { estimateVariable } from "./projection";
+
+describe("estimativa do dia a dia", () => {
+  const stamp2 = { createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z" };
+  const t = (o: Partial<Transaction>): Transaction => ({ id: Math.random().toString(36), ...stamp2, type: "despesa", amountCents: 1000, description: "x", date: "2026-09-10", ...o });
+
+  it("média dos meses completos com movimento, ignorando parcelas e lançamentos automáticos", () => {
+    const txs = [
+      t({ date: "2026-09-10", amountCents: 30000 }), t({ date: "2026-08-10", amountCents: 50000 }),
+      t({ date: "2026-09-12", amountCents: 99999, installmentGroupId: "g" }), t({ date: "2026-09-05", amountCents: 120000, recurrenceId: "r" }),
+      t({ type: "receita", date: "2026-07-05", amountCents: 500000 }),
+    ];
+    // set/ago têm gasto e jul só tem receita (conta como mês com movimento): (30000 + 50000) / 3
+    expect(estimateVariable(txs, "2026-10-27")).toMatchObject({ monthlyCents: 26667, monthsUsed: 3, soFarCents: 0 });
+  });
+  it("sem histórico não estima", () => {
+    expect(estimateVariable([], "2026-10-27")).toEqual({ monthlyCents: 0, soFarCents: 0, monthsUsed: 0 });
+  });
+  it("o que já foi gasto no mês atual é abatido da estimativa do mês atual", () => {
+    const plan = buildPlan({ ...base, variableMonthlyCents: 100000, variableSoFarCents: 40000 });
+    expect(plan[0].variableCents).toBe(60000);
+    expect(plan[1].variableCents).toBe(100000);
+    expect(plan[1].expenseCents).toBe(100000);
+  });
+});
