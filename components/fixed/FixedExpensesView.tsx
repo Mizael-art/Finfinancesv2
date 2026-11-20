@@ -15,6 +15,7 @@ import { formatCents } from "@/lib/money";
 import { getServices } from "@/services";
 import type { Recurrence } from "@/types/domain";
 import FixedExpenseFormSheet from "./FixedExpenseFormSheet";
+import PayBillSheet from "./PayBillSheet";
 
 function Skeleton() {
   return (
@@ -28,6 +29,7 @@ function Skeleton() {
 /** Despesas que se repetem (aluguel, internet, assinaturas): ver, criar, editar, pausar e excluir. */
 export default function FixedExpensesView() {
   const [form, setForm] = useState<{ key: number; id?: string } | null>(null);
+  const [paying, setPaying] = useState<Bill | null>(null);
   const toast = useToast();
   // Vindo do botão "+" ("/fixas?nova=1"): abre o formulário de nova despesa assim que os dados chegam.
   const [wantNew, setWantNew] = useState(false);
@@ -38,7 +40,7 @@ export default function FixedExpensesView() {
   }, []);
   const { data, error, reload } = useLiveQuery(async () => {
     const s = getServices();
-    const [recurrences, categories, accounts, cards] = await Promise.all([s.recurrences.list(), s.categories.list(), s.accounts.list(), s.cards.list()]);
+    const [recurrences, categories, accounts, cards] = await Promise.all([s.recurrences.list(), s.categories.list(), s.accounts.listWithBalances(), s.cards.list()]);
     return { recurrences, categories, accounts, cards };
   }, []);
 
@@ -93,8 +95,10 @@ export default function FixedExpensesView() {
   };
 
   const togglePaid = (b: Bill) => {
+    // Despesa de conta: pergunta qual conta pagou (o saldo é descontado na hora). Cartão: o valor já vai para a fatura.
+    if (!b.paid && !b.recurrence.cardId) { setPaying(b); return; }
     getServices().recurrences.setPaid(b.recurrence.id, b.dueDate, !b.paid)
-      .then(() => toast.show(b.paid ? "Pagamento desfeito." : "Marcada como paga."))
+      .then(() => toast.show(b.paid ? (b.recurrence.cardId ? "Pagamento desfeito." : "Pagamento desfeito. O valor voltou para a conta.") : "Marcada como paga."))
       .catch(() => toast.show("Não foi possível atualizar agora."));
   };
 
@@ -203,6 +207,9 @@ export default function FixedExpensesView() {
       </div>
       {form && data && view && (form.id ? editing : true) && (
         <FixedExpenseFormSheet key={form.key} expense={editing} categories={view.expenseCats} accounts={data.accounts} cards={data.cards} onClose={() => setForm(null)} onDone={toast.show} />
+      )}
+      {paying && data && (
+        <PayBillSheet key={paying.key} bill={paying} accounts={data.accounts} onClose={() => setPaying(null)} onDone={toast.show} />
       )}
       <Toast message={toast.message} />
     </main>

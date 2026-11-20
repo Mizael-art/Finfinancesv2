@@ -122,13 +122,68 @@ export function createRecurrencesService(storage: Storage) {
     generateDue,
     /** Para de repetir daqui para frente (as transações já lançadas ficam). */
     stop: (id: string) => crud.update(id, { active: false }),
-    /** Marca (ou desmarca) o vencimento `dueDate` como pago. Guarda só os últimos 24 vencimentos. */
-    async setPaid(id: string, dueDate: string, paid: boolean) {
+    /**
+     * Marca (ou desmarca) o vencimento `dueDate` como pago. Guarda só os últimos 24 vencimentos.
+     *
+     * Despesa de conta: ao pagar, o saldo da conta escolhida (`accountId`) é descontado na hora — a transação
+     * desse vencimento (mesmo id que o lançamento automático usa, então nunca desconta duas vezes) passa a ser
+     * da conta escolhida, na data do pagamento (`date`, padrão hoje; nunca no futuro) e com o valor pago
+     * (`amountCents`, para contas que variam como luz e água). Ao desfazer: vencimento futuro → a transação some (volta a ser lançada no dia);
+     * vencimento que já passou → volta a ser o lançamento automático (data do vencimento, conta padrão).
+     * Despesa de cartão: só marca; o valor já vai para a fatura.
+     */
+    async setPaid(id: string, dueDate: string, paid: boolean, opts: { accountId?: string; amountCents?: number; date?: string; today?: string } = {}) {
       const rec = await crud.get(id);
       if (!rec) throw new ValidationError("Despesa fixa não encontrada.", "id");
+      requireDate(dueDate, "dueDate", "o vencimento");
+      const today = opts.today ?? todayISODate();
       const set = new Set(rec.paidDates ?? []);
       if (paid) set.add(dueDate); else set.delete(dueDate);
-      return crud.update(id, { paidDates: [...set].sort().slice(-24) });
+      const updatedRec: Recurrence = { ...rec, paidDates: [...set].sort().slice(-24), updatedAt: nowISO() };
+      const ops: BatchOp[] = [{ store: "recurrences", type: "put", value: updatedRec }];
+
+      if (rec.type === "despesa" && !rec.cardId) {
+        const txId = occurrenceId(rec.id, dueDate);
+        const [existing, accounts, categories] = await Promise.all([
+          storage.repo("transactions").get(txId),
+          storage.repo("accounts").list(),
+          storage.repo("categories").list(),
+        ]);
+        const activeAccounts = accounts.filter((a) => !a.archivedAt).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+        const category = rec.categoryId ? categories.find((c) => c.id === rec.categoryId) : categories.find((c) => c.name === "Outros" && c.kind === "despesa");
+        const write = (accountId: string, date: string, amountCents: number) => {
+          const data = normalizeTransaction({
+            type: "despesa",
+            amountCents,
+            description: existing?.description ?? rec.description,
+            date,
+            categoryId: existing?.categoryId ?? category?.id,
+            notes: existing?.notes,
+            accountId,
+            recurrenceId: rec.id,
+          } as NewEntity<Transaction>);
+          const value = existing
+            ? { ...data, id: existing.id, createdAt: existing.createdAt, updatedAt: nowISO() } as Transaction
+            : buildEntity<Transaction>(data, txId);
+          ops.push({ store: "transactions", type: "put", value });
+        };
+
+        if (paid) {
+          const accountId = opts.accountId ?? rec.accountId ?? activeAccounts[0]?.id;
+          if (!accountId || !activeAccounts.some((a) => a.id === accountId)) throw new ValidationError("Escolha a conta usada para pagar.", "accountId");
+          const date = opts.date ? requireDate(opts.date, "date", "a data do pagamento") : today;
+          if (date > today) throw new ValidationError("A data do pagamento não pode ser no futuro.", "date");
+          const amountCents = opts.amountCents !== undefined ? requireCents(opts.amountCents, "amountCents", "valor pago", 1) : existing?.amountCents ?? rec.amountCents;
+          write(accountId, date, amountCents);
+        } else if (existing) {
+          const defaultAccount = activeAccounts.find((a) => a.id === rec.accountId) ?? activeAccounts[0];
+          if (dueDate > today || !defaultAccount) ops.push({ store: "transactions", type: "delete", id: txId });
+          else write(defaultAccount.id, dueDate, rec.amountCents);
+        }
+      }
+
+      await storage.batch(ops);
+      return updatedRec;
     },
   };
 }

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { ValidationError } from "@/lib/errors";
 import { newId } from "@/lib/id";
 import { createIndexedDbStorage } from "@/storage/indexeddb";
 import type { Storage } from "@/storage/types";
@@ -185,5 +186,58 @@ describe("recurrences.generateDue", () => {
     await svc.recurrences.create({ type: "receita", description: "Salário", amountCents: reais(5000), categoryId: salario.id, accountId: nu.id, frequency: "mensal", dayOfMonth: 5, active: true, startDate: "2026-08-01" });
     await svc.recurrences.generateDue({ today: "2026-09-29" });
     expect(await balance(nu.id)).toBe(reais(10000 + 10000));
+  });
+});
+
+describe("recurrences.setPaid (paguei)", () => {
+  it("desconta na hora da conta escolhida e o lançamento automático não duplica", async () => {
+    const { nu, moradia } = await setup();
+    const inter = await svc.accounts.create({ name: "Inter", type: "digital", initialBalanceCents: reais(3000) });
+    const rec = await svc.recurrences.create(rent({ categoryId: moradia.id, accountId: nu.id, startDate: "2026-10-01" }));
+    await svc.recurrences.setPaid(rec.id, "2026-10-05", true, { accountId: inter.id, today: "2026-10-02" });
+    expect(await balance(inter.id)).toBe(reais(3000 - 1500));
+    expect(await balance(nu.id)).toBe(reais(10000));
+    expect((await svc.recurrences.get(rec.id))!.paidDates).toEqual(["2026-10-05"]);
+    await svc.recurrences.generateDue({ today: "2026-10-10" });
+    const txs = await svc.transactions.list();
+    expect(txs).toHaveLength(1);
+    expect(txs[0]).toMatchObject({ date: "2026-10-02", accountId: inter.id, categoryId: moradia.id });
+  });
+
+  it("desfazer: vencimento futuro some; vencido volta ao lançamento automático", async () => {
+    const { nu, moradia } = await setup();
+    const inter = await svc.accounts.create({ name: "Inter", type: "digital", initialBalanceCents: reais(3000) });
+    const rec = await svc.recurrences.create(rent({ categoryId: moradia.id, accountId: nu.id, startDate: "2026-10-01" }));
+    await svc.recurrences.setPaid(rec.id, "2026-10-05", true, { accountId: inter.id, today: "2026-10-02" });
+    await svc.recurrences.setPaid(rec.id, "2026-10-05", false, { today: "2026-10-03" });
+    expect(await svc.transactions.list()).toHaveLength(0);
+    expect(await balance(inter.id)).toBe(reais(3000));
+
+    await svc.recurrences.generateDue({ today: "2026-10-06" });
+    await svc.recurrences.setPaid(rec.id, "2026-10-05", true, { accountId: inter.id, today: "2026-10-07" });
+    expect(await svc.transactions.list()).toHaveLength(1);
+    expect(await balance(nu.id)).toBe(reais(10000));
+    await svc.recurrences.setPaid(rec.id, "2026-10-05", false, { today: "2026-10-08" });
+    const [t] = await svc.transactions.list();
+    expect(t).toMatchObject({ date: "2026-10-05", accountId: nu.id });
+    expect(await balance(inter.id)).toBe(reais(3000));
+  });
+
+  it("despesa de cartão só marca (não mexe em conta)", async () => {
+    const { nu, assin } = await setup();
+    const card = await svc.cards.create({ name: "Nu", institution: "Nubank", limitCents: reais(5000), closingDay: 12, dueDay: 19 });
+    const rec = await svc.recurrences.create(rent({ categoryId: assin.id, cardId: card.id, startDate: "2026-10-01" }));
+    await svc.recurrences.setPaid(rec.id, "2026-10-05", true, { today: "2026-10-02" });
+    expect(await svc.transactions.list()).toHaveLength(0);
+    expect(await balance(nu.id)).toBe(reais(10000));
+  });
+
+  it("aceita valor e data do pagamento (conta que varia, paga ontem)", async () => {
+    const { nu, moradia } = await setup();
+    const rec = await svc.recurrences.create(rent({ categoryId: moradia.id, accountId: nu.id, startDate: "2026-10-01", description: "Luz", amountCents: reais(200) }));
+    await svc.recurrences.setPaid(rec.id, "2026-10-05", true, { accountId: nu.id, amountCents: reais(237.5), date: "2026-10-01", today: "2026-10-02" });
+    const [t] = await svc.transactions.list();
+    expect(t).toMatchObject({ date: "2026-10-01", amountCents: reais(237.5) });
+    await expect(svc.recurrences.setPaid(rec.id, "2026-10-05", true, { accountId: nu.id, date: "2026-10-03", today: "2026-10-02" })).rejects.toBeInstanceOf(ValidationError);
   });
 });

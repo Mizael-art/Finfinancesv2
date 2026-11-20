@@ -1,4 +1,4 @@
-import { reminderBills } from "@/features/bills/bills";
+import { reminderBills, type Bill } from "@/features/bills/bills";
 import { firstNegativeMonth } from "@/features/planning/goals";
 import type { PlanMonth } from "@/features/planning/projection";
 import { addDays, formatDayMonth, monthName } from "@/lib/date";
@@ -14,6 +14,8 @@ export interface AppAlert {
   title: string;
   detail: string;
   href: string;
+  /** Aviso de UMA conta paga por conta bancária: dá para pagar ali mesmo (abre a janela de pagamento). */
+  payBill?: Bill;
 }
 
 export interface AlertInput {
@@ -30,6 +32,8 @@ export interface AlertsResult { alerts: AppAlert[]; /** Quantas contas/faturas p
 
 const dayDiff = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
 const when = (days: number) => (days <= 0 ? "hoje" : days === 1 ? "amanhã" : `em ${days} dias`);
+/** Só conta de conta bancária: a de cartão já vai para a fatura. */
+const payable = (bills: Bill[]) => (bills.length === 1 && !bills[0].recurrence.cardId ? bills[0] : undefined);
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** Avisos da tela inicial: contas a pagar, faturas, orçamentos, limite do cartão e sobra negativa. Mais urgentes primeiro. */
@@ -43,7 +47,7 @@ export function buildAlerts({ today, recurrences, budgets, cards, invoices, plan
   if (overdue.length > 0) {
     const total = overdue.reduce((s, b) => s + b.recurrence.amountCents, 0);
     out.push({
-      id: "contas-atrasadas", severity: "alta", href: "/fixas",
+      id: "contas-atrasadas", severity: "alta", href: "/fixas", payBill: payable(overdue),
       title: overdue.length === 1 ? `${overdue[0].recurrence.description} está atrasada` : `${overdue.length} contas atrasadas`,
       detail: overdue.length === 1 ? `Venceu em ${formatDayMonth(overdue[0].dueDate)} · ${formatCents(total)}. Toque para marcar como paga.` : `Somam ${formatCents(total)}. Toque para ver e marcar como pagas.`,
     });
@@ -54,7 +58,7 @@ export function buildAlerts({ today, recurrences, budgets, cards, invoices, plan
     const first = soonOnly[0];
     const days = dayDiff(today, first.dueDate);
     out.push({
-      id: "contas-vencendo", severity: days <= 0 ? "alta" : "media", href: "/fixas",
+      id: "contas-vencendo", severity: days <= 0 ? "alta" : "media", href: "/fixas", payBill: payable(soonOnly),
       title: soonOnly.length === 1 ? `${first.recurrence.description} vence ${when(days)}` : `${plural(soonOnly.length, "conta vence", "contas vencem")} nos próximos 3 dias`,
       detail: soonOnly.length === 1 ? formatCents(total) : `Somam ${formatCents(total)}.`,
     });
