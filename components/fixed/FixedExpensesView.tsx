@@ -5,7 +5,8 @@ import AddAccountButton from "@/components/finance/AddAccountButton";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import Toast from "@/components/ui/Toast";
-import { buildBillsView, type Bill } from "@/features/bills/bills";
+import Link from "next/link";
+import { buildBillsView, cardPaidKeys, type Bill } from "@/features/bills/bills";
 import { nextDueDate } from "@/features/fixed/nextDue";
 import { FREQUENCY_ADVERB } from "@/features/transactions/constants";
 import { useLiveQuery } from "@/hooks/useLiveQuery";
@@ -40,8 +41,11 @@ export default function FixedExpensesView() {
   }, []);
   const { data, error, reload } = useLiveQuery(async () => {
     const s = getServices();
-    const [recurrences, categories, accounts, cards] = await Promise.all([s.recurrences.list(), s.categories.list(), s.accounts.listWithBalances(), s.cards.list()]);
-    return { recurrences, categories, accounts, cards };
+    const [recurrences, categories, accounts, cards, invoices, transactions] = await Promise.all([
+      s.recurrences.list(), s.categories.list(), s.accounts.listWithBalances(), s.cards.list(), s.invoices.list(), s.transactions.list(),
+    ]);
+    // Despesa no cartão fica paga quando a fatura em que caiu é paga.
+    return { recurrences, categories, accounts, cards, cardPaid: cardPaidKeys(transactions, invoices) };
   }, []);
 
   const view = useMemo(() => {
@@ -55,7 +59,7 @@ export default function FixedExpensesView() {
     const monthlyTotal = active.filter((r) => r.frequency === "mensal").reduce((sum, r) => sum + r.amountCents, 0);
     // Contas do mês (com "paguei"): o mês atual some quando tudo está pago e a lista segue para o mês seguinte.
     const today = todayISODate();
-    const bills = buildBillsView(active, today);
+    const bills = buildBillsView(active, today, data.cardPaid);
     const shown = new Set([...(bills.showCurrent ? bills.current : []), ...bills.next].map((b) => b.recurrence.id));
     const later = active.filter((r) => !shown.has(r.id) && !(bills.currentPaidAll && bills.current.some((b) => b.recurrence.id === r.id))).map((r) => ({ recurrence: r, next: nextDueDate(r, today) }));
     return { expenses, active, paused: expenses.filter((r) => !r.active), expenseCats, catName, accName, cardName, monthlyTotal, bills, later };
@@ -95,10 +99,10 @@ export default function FixedExpensesView() {
   };
 
   const togglePaid = (b: Bill) => {
-    // Despesa de conta: pergunta qual conta pagou (o saldo é descontado na hora). Cartão: o valor já vai para a fatura.
-    if (!b.paid && !b.recurrence.cardId) { setPaying(b); return; }
-    getServices().recurrences.setPaid(b.recurrence.id, b.dueDate, !b.paid)
-      .then(() => toast.show(b.paid ? (b.recurrence.cardId ? "Pagamento desfeito." : "Pagamento desfeito. O valor voltou para a conta.") : "Marcada como paga."))
+    // Pergunta qual conta pagou (o saldo é descontado na hora). Despesa no cartão não passa por aqui: segue a fatura.
+    if (!b.paid) { setPaying(b); return; }
+    getServices().recurrences.setPaid(b.recurrence.id, b.dueDate, false)
+      .then(() => toast.show("Pagamento desfeito. O valor voltou para a conta."))
       .catch(() => toast.show("Não foi possível atualizar agora."));
   };
 
@@ -108,7 +112,7 @@ export default function FixedExpensesView() {
     const hasCategory = !!r.categoryId && v.catName.has(r.categoryId);
     const where = r.cardId ? `Cartão ${v.cardName.get(r.cardId) ?? ""}` : r.accountId ? v.accName.get(r.accountId) : "Conta principal";
     const sub = [hasCategory ? v.catName.get(r.categoryId!) : null, where].filter(Boolean).join(" · ");
-    const status = b.paid ? "Paga" : b.status === "atrasada" ? `Atrasada · ${formatDayMonth(b.dueDate)}` : b.status === "hoje" ? "Vence hoje" : `Vence ${formatDayMonth(b.dueDate)}`;
+    const status = b.onCard ? (b.paid ? "Paga na fatura" : "Entra na fatura do cartão") : b.paid ? "Paga" : b.status === "atrasada" ? `Atrasada · ${formatDayMonth(b.dueDate)}` : b.status === "hoje" ? "Vence hoje" : `Vence ${formatDayMonth(b.dueDate)}`;
     const tone = b.paid ? "text-ok" : b.status === "atrasada" ? "text-bad-soft" : b.status === "hoje" ? "text-amber-300" : "text-white/50";
     return (
       <li key={b.key} className={`flex items-center rounded-xl border bg-white/[0.03] ${b.status === "atrasada" ? "border-bad/35" : "border-white/[0.06]"} ${b.paid ? "opacity-75" : ""}`}>
@@ -127,6 +131,11 @@ export default function FixedExpensesView() {
           </span>
           <span className="shrink-0 text-[15px] font-semibold tabular-nums text-white">{formatCents(r.amountCents)}</span>
         </button>
+        {b.onCard ? (
+          <Link href="/faturas" aria-label={`Ver a fatura de ${r.description}`} className="mx-3 shrink-0 rounded-full border border-white/[0.14] px-3 py-2 text-[12.5px] font-semibold text-white/70 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-400">
+            Fatura
+          </Link>
+        ) : (
         <button
           type="button"
           aria-pressed={b.paid}
@@ -136,6 +145,7 @@ export default function FixedExpensesView() {
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
         </button>
+        )}
       </li>
     );
   };
@@ -163,7 +173,9 @@ export default function FixedExpensesView() {
             <p className={`mt-3 border-t border-white/[0.06] pt-3 text-[13px] ${view.bills.pendingCount > 0 ? (view.bills.overdueCount > 0 ? "text-bad-soft" : "text-white/70") : view.bills.currentPaidAll ? "text-ok" : "text-white/45"}`}>
               {view.bills.pendingCount > 0
                 ? `Falta pagar em ${monthName(view.bills.currentKey)}: ${formatCents(view.bills.pendingCents)} (${view.bills.pendingCount} ${view.bills.pendingCount === 1 ? "conta" : "contas"})${view.bills.overdueCount > 0 ? ` · ${view.bills.overdueCount} atrasada${view.bills.overdueCount > 1 ? "s" : ""}` : ""}`
-                : view.bills.currentPaidAll ? `Contas de ${monthName(view.bills.currentKey)} pagas — mostrando as de ${monthName(view.bills.nextKey)}.` : `Nenhuma conta vence em ${monthName(view.bills.currentKey)}.`}
+                : view.bills.currentPaidAll ? `Contas de ${monthName(view.bills.currentKey)} pagas — mostrando as de ${monthName(view.bills.nextKey)}.`
+                : view.bills.cardPendingCount > 0 ? `Contas de ${monthName(view.bills.currentKey)} pagas. ${view.bills.cardPendingCount === 1 ? "A do cartão fica paga" : "As do cartão ficam pagas"} quando você pagar a fatura.`
+                : `Nenhuma conta vence em ${monthName(view.bills.currentKey)}.`}
             </p>
           )}
         </section>

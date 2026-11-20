@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Recurrence } from "@/types/domain";
-import { billsInMonth, buildBillsView, reminderBills } from "./bills";
+import { billsInMonth, buildBillsView, cardPaidKeys, reminderBills } from "./bills";
 
 const stamp = { createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z" };
 const rec = (o: Partial<Recurrence>): Recurrence => ({ id: "r1", ...stamp, type: "despesa", description: "Aluguel", amountCents: 120000, frequency: "mensal", dayOfMonth: 5, active: true, startDate: "2026-01-05", lastGeneratedDate: "2026-10-05", ...o });
@@ -55,5 +55,26 @@ describe("reminderBills", () => {
   });
   it("conta paga não gera lembrete", () => {
     expect(reminderBills([rec({ paidDates: ["2026-10-05"] })], "2026-10-30").overdue).toHaveLength(0);
+  });
+});
+
+describe("despesa no cartão segue a fatura", () => {
+  const card = rec({ id: "c1", description: "Netflix", cardId: "card1", dayOfMonth: 5 });
+  it("fica paga só quando a fatura em que caiu é paga (marcar à mão não vale)", () => {
+    const keys = cardPaidKeys(
+      [{ id: "rec:c1:2026-10-05", cardId: "card1", invoiceId: "inv-out" }, { id: "rec:c1:2026-09-05", cardId: "card1", invoiceId: "inv-set" }],
+      [{ id: "inv-out" }, { id: "inv-set", paidAt: "2026-10-10T00:00:00.000Z" }],
+    );
+    expect([...keys]).toEqual(["c1:2026-09-05"]);
+    const [b] = billsInMonth([{ ...card, paidDates: ["2026-10-05"] }], "2026-10", TODAY, keys);
+    expect(b).toMatchObject({ onCard: true, paid: false, status: "pendente" }); // nunca "atrasada": quem atrasa é a fatura
+    const [paid] = billsInMonth([card], "2026-10", TODAY, new Set(["c1:2026-10-05"]));
+    expect(paid).toMatchObject({ paid: true, status: "paga" });
+  });
+  it("não entra no 'falta pagar' nem nos lembretes", () => {
+    const v = buildBillsView([card], TODAY);
+    expect(v).toMatchObject({ pendingCount: 0, pendingCents: 0, overdueCount: 0, cardPendingCount: 1, showCurrent: true, currentPaidAll: false });
+    expect(reminderBills([card], "2026-10-04").soon).toHaveLength(0);
+    expect(buildBillsView([card], TODAY, new Set(["c1:2026-10-05"]))).toMatchObject({ currentPaidAll: true, showCurrent: false });
   });
 });

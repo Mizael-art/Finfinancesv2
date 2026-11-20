@@ -38,7 +38,7 @@ export function buildUpcoming({ today, recurrences, invoices, months = 3 }: Upco
   for (let i = 0; i < months; i++) {
     const key = monthKey(addMonths(startOfMonth(today), i));
     for (const b of billsInMonth(recurrences, key, today)) {
-      if (b.paid) continue;
+      if (b.paid || b.onCard) continue; // no cartão o valor já está na fatura (listada abaixo)
       out.push({
         id: `conta:${b.key}`, kind: "conta", title: b.recurrence.description, dueDate: b.dueDate, cents: b.recurrence.amountCents,
         status: b.status === "atrasada" ? "atrasada" : b.status === "hoje" ? "hoje" : "proxima", href: "/fixas",
