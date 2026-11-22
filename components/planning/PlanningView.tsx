@@ -7,11 +7,10 @@ import AddAccountButton from "@/components/finance/AddAccountButton";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorState from "@/components/ui/ErrorState";
 import { averageFreeCents, firstNegativeMonth, goalHints } from "@/features/planning/goals";
-import { PLAN_GROUP_LABEL, PLAN_GROUP_ORDER, buildPlan, estimateVariable, type PlanMonth } from "@/features/planning/projection";
-import { useLiveQuery } from "@/hooks/useLiveQuery";
-import { addMonths, formatDayMonth, monthKey, monthName, startOfMonth, todayISODate } from "@/lib/date";
+import { PLAN_GROUP_LABEL, PLAN_GROUP_ORDER, type PlanMonth } from "@/features/planning/projection";
+import { usePlanningData } from "@/features/planning/usePlanningData";
+import { formatDayMonth, monthKey, monthName } from "@/lib/date";
 import { formatCents } from "@/lib/money";
-import { getServices } from "@/services";
 
 const HORIZONS = [3, 6, 12] as const;
 const MAX_ROWS = 8;
@@ -33,31 +32,14 @@ export default function PlanningView() {
   const [open, setOpen] = useState<string | null | undefined>(undefined);
   const [withEstimate, setWithEstimate] = useState(true);
 
-  const { data, error, reload } = useLiveQuery(async () => {
-    const s = getServices();
-    const today = todayISODate();
-    const [transactions, recurrences, incomes, goals, invoices] = await Promise.all([s.transactions.list({ from: addMonths(startOfMonth(today), -3) }), s.recurrences.list(), s.income.list(), s.goals.list(), s.invoices.views({ today })]);
-    return { today, transactions, recurrences, incomes, goals, invoices };
-  }, []);
-
-  const estimate = useMemo(() => (data ? estimateVariable(data.transactions, data.today) : null), [data]);
+  const { data, error, reload, estimate, plan: fullPlan, balances, invoicesByMonth: invoices } = usePlanningData(months, withEstimate);
+  const invoicesByMonth = useMemo(() => invoices ?? new Map<string, NonNullable<typeof data>["invoiceViews"]>(), [invoices]);
   // Quando as contas do mês atual já passaram (nada mais a vencer nele), começa direto pelo mês seguinte.
   const plan = useMemo(() => {
-    if (!data || !estimate) return null;
+    if (!fullPlan || !data) return null;
     const currentKey = monthKey(data.today);
-    return buildPlan({ ...data, months, variableMonthlyCents: withEstimate ? estimate.monthlyCents : 0, variableSoFarCents: estimate.soFarCents })
-      .filter((m) => !(m.key === currentKey && m.items.length === 0));
-  }, [data, estimate, months, withEstimate]);
-  // Faturas de cartão por mês de vencimento: só informativo (as compras já contam nos gastos do mês em que foram feitas).
-  const invoicesByMonth = useMemo(() => {
-    const map = new Map<string, NonNullable<typeof data>["invoices"]>();
-    for (const v of data?.invoices ?? []) {
-      if (v.status === "paga" || v.totalCents <= 0) continue;
-      const k = monthKey(v.invoice.dueDate);
-      map.set(k, [...(map.get(k) ?? []), v]);
-    }
-    return map;
-  }, [data]);
+    return fullPlan.filter((m) => !(m.key === currentKey && m.items.length === 0));
+  }, [fullPlan, data]);
   const sum = useMemo(() => {
     if (!plan) return null;
     const income = plan.reduce((s, m) => s + m.incomeCents, 0);
@@ -77,6 +59,8 @@ export default function PlanningView() {
     const base = m.incomeCents > 0 ? m.incomeCents : maxExpense;
     const pct = Math.min(100, Math.round((m.expenseCents / base) * 100));
     const over = m.incomeCents > 0 && m.expenseCents > m.incomeCents;
+    const endBalance = balances?.get(m.key)?.endCents;
+    const detailHref = `/planejamento/${m.key}${withEstimate ? "" : "?est=0"}`;
     return (
       <li key={m.key} className="overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.03]">
         <button type="button" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : m.key)} className="w-full px-4 py-3.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-400">
@@ -101,6 +85,12 @@ export default function PlanningView() {
           <span className="mt-3 block h-1.5 overflow-hidden rounded-full bg-white/[0.08]" aria-hidden>
             <span className={`block h-full rounded-full ${over ? "bg-bad" : "bg-violet-400"}`} style={{ width: `${pct}%` }} />
           </span>
+          {endBalance !== undefined && (
+            <span className="mt-2.5 flex items-baseline justify-between gap-2 text-[12.5px]">
+              <span className="text-white/45">Saldo previsto nas contas no fim do mês</span>
+              <span className={`shrink-0 font-semibold tabular-nums ${endBalance < 0 ? "text-bad" : "text-white/80"}`}>{formatCents(endBalance)}</span>
+            </span>
+          )}
         </button>
         {isOpen && (
           <div className="border-t border-white/[0.06] px-4 py-3">
@@ -169,6 +159,10 @@ export default function PlanningView() {
                 )}
               </>
             )}
+            <Link href={detailHref} className="mt-3 flex h-11 items-center justify-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] text-[14px] font-semibold text-white transition hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-400">
+              Ver mês completo
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m9 6 6 6-6 6" /></svg>
+            </Link>
           </div>
         )}
       </li>
@@ -195,7 +189,7 @@ export default function PlanningView() {
           <p className="mt-1 text-[28px] font-semibold tabular-nums tracking-tight text-white">{formatCents(sum.expense)}</p>
           <p className="text-[13px] text-white/45">em despesas já previstas</p>
           <div className="mt-3 grid grid-cols-2 gap-3 border-t border-white/[0.06] pt-3">
-            <div><p className="text-[11px] uppercase tracking-wide text-white/40">Receitas previstas</p><p className="text-[15px] font-semibold tabular-nums text-white/80">{formatCents(sum.income)}</p></div>
+            <div><p className="text-[11px] uppercase tracking-wide text-white/40">Receitas previstas</p><p className="text-[15px] font-semibold tabular-nums text-white/80">{formatCents(sum.income)}</p><Link href="/renda" className="text-[12px] font-medium text-violet-300 hover:text-violet-200">Editar salário</Link></div>
             <div><p className="text-[11px] uppercase tracking-wide text-white/40">Sobra prevista</p><p className={`text-[15px] font-semibold tabular-nums ${tone(sum.balance)}`}>{formatCents(sum.balance)}</p></div>
           </div>
         </section>

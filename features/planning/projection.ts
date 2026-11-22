@@ -14,7 +14,7 @@ export const PLAN_GROUP_LABEL: Record<PlanGroup, string> = {
 };
 
 /** `txId`: quando o item é um lançamento real (dá para abrir, editar ou apagar). */
-export interface PlanItem { id: string; group: PlanGroup; label: string; date: string; cents: number; txId?: string }
+export interface PlanItem { id: string; group: PlanGroup; label: string; date: string; cents: number; txId?: string; categoryId?: string }
 
 export interface PlanMonth {
   /** "YYYY-MM" */
@@ -61,7 +61,7 @@ export function buildPlan({ today, months, transactions, recurrences, incomes, v
     if (t.date <= today || t.date > end) continue;
     if (t.type === "despesa") {
       const label = t.installmentTotal ? `${t.description} (${t.installmentNumber}/${t.installmentTotal})` : t.description;
-      add({ id: t.id, group: t.installmentGroupId ? "parcela" : "lancada", label, date: t.date, cents: t.amountCents, txId: t.id });
+      add({ id: t.id, group: t.installmentGroupId ? "parcela" : "lancada", label, date: t.date, cents: t.amountCents, txId: t.id, categoryId: t.categoryId });
     } else if (t.type === "receita") {
       add({ id: t.id, group: "renda", label: t.description, date: t.date, cents: t.amountCents, txId: t.id });
     }
@@ -71,7 +71,7 @@ export function buildPlan({ today, months, transactions, recurrences, incomes, v
     if (!r.active) continue;
     const after = r.lastGeneratedDate && r.lastGeneratedDate > today ? r.lastGeneratedDate : today;
     for (const date of occurrencesUpTo({ ...r, lastGeneratedDate: after }, end)) {
-      add({ id: `${r.id}:${date}`, group: r.type === "despesa" ? "fixa" : "renda", label: r.description, date, cents: r.amountCents });
+      add({ id: `${r.id}:${date}`, group: r.type === "despesa" ? "fixa" : "renda", label: r.description, date, cents: r.amountCents, categoryId: r.categoryId });
     }
   }
 

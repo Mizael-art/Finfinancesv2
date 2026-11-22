@@ -95,7 +95,8 @@ export default function SettingsView() {
             </Field>
             {formError && <p role="alert" className="rounded-lg border border-bad/30 bg-bad/10 px-4 py-3 text-[13px] text-bad-soft">{formError}</p>}
             <PrimaryButton type="submit" disabled={busy}>{busy ? "Salvando…" : "Salvar perfil"}</PrimaryButton>
-            <Link href="/onboarding" className="text-center text-[13px] font-medium text-violet-300 hover:text-violet-200">Editar renda e objetivos financeiros</Link>
+            <Link href="/renda" className="text-center text-[13px] font-medium text-violet-300 hover:text-violet-200">Editar salário e outras rendas</Link>
+            <Link href="/onboarding" className="text-center text-[13px] font-medium text-violet-300 hover:text-violet-200">Editar objetivos financeiros</Link>
           </form>
         </Card>
 

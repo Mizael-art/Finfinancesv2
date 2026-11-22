@@ -9,6 +9,7 @@ export interface MoreLink {
 export const MORE_LINKS: MoreLink[] = [
   { href: "/faturas", label: "Faturas", description: "Faturas dos cartões e pagamentos", icon: ["M6 3h12v18l-3-2-3 2-3-2-3 2z", "M9 8h6M9 12h6"] },
   { href: "/planejamento", label: "Planejamento", description: "O que vem nos próximos meses", icon: ["M3 3v18h18", "M7 15l4-4 3 3 5-6"] },
+  { href: "/renda", label: "Renda", description: "Salário e outras rendas", icon: ["M12 2v20", "M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"] },
   { href: "/fixas", label: "Despesas fixas", description: "Aluguel, internet, assinaturas", icon: ["M17 2l4 4-4 4", "M3 11V9a3 3 0 0 1 3-3h15", "M7 22l-4-4 4-4", "M21 13v2a3 3 0 0 1-3 3H3"] },
   { href: "/importar", label: "Importar e exportar", description: "Extrato do banco (CSV/OFX) e planilha", icon: ["M12 3v12", "M7 10l5 5 5-5", "M5 21h14"] },
   { href: "/categorias", label: "Categorias", description: "Organize receitas e despesas", icon: ["M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"] },
